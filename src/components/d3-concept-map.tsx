@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import * as d3 from "d3"
-import { D3MapControls } from "./d3-map-controls"
-import { X, Layers } from 'lucide-react'
-import { NodeDetailPanel } from "./NodeDetailPanel"
+import { MapControls } from "./map-controls"
+import { NodeDetailPanel } from "./node-detail-panel"
+import { X, Layers } from "lucide-react"
 
 interface D3ConceptMapProps {
   data: {
@@ -17,6 +17,8 @@ interface D3ConceptMapProps {
       importance: number
       discipline?: string
       year?: number
+      period?: string
+      location?: string
       resources?: Array<{
         title: string
         url?: string
@@ -36,113 +38,24 @@ interface D3ConceptMapProps {
       start?: number
       end?: number
     }
+    geography?: string[]
+    keyThemes?: string[]
   }
   initialComplexity?: string
 }
 
-// Convert flat data to hierarchical structure
-const createHierarchicalData = (nodes: any[], edges: any[]) => {
-  // Find the most connected node as root
-  const connections: Record<string, number> = {}
-  edges.forEach((edge) => {
-    connections[edge.source] = (connections[edge.source] || 0) + 1
-    connections[edge.target] = (connections[edge.target] || 0) + 1
-  })
-
-
-  const rootId = Object.entries(connections).reduce((a, b) => (a[1] > b[1] ? a : b))[0]
-
-  const rootNode = nodes.find((n) => n.id === rootId)
-
-  if (!rootNode) return { id: "root", label: "Root", children: [] }
-
-  // Build adjacency list
-  const adjacencyList: Record<string, string[]> = {}
-  edges.forEach((edge) => {
-    if (!adjacencyList[edge.source]) adjacencyList[edge.source] = []
-    if (!adjacencyList[edge.target]) adjacencyList[edge.target] = []
-    adjacencyList[edge.source].push(edge.target)
-    adjacencyList[edge.target].push(edge.source)
-  })
-
-  // Build tree using BFS
-  const visited = new Set<string>()
-  const queue = [{ node: rootNode, parent: null }]
-  const nodeMap = new Map<string, any>()
-
-  // Initialize root
-  const root = {
-    ...rootNode,
-    children: [],
-    depth: 0,
-  }
-  nodeMap.set(rootId, root)
-  visited.add(rootId)
-
-  while (queue.length > 0) {
-    const { node: currentNode, parent } = queue.shift()!
-    const currentHierarchyNode = nodeMap.get(currentNode.id)!
-
-    // Add children
-    const neighbors = adjacencyList[currentNode.id] || []
-    neighbors.forEach((neighborId) => {
-      if (!visited.has(neighborId)) {
-        const neighborNode = nodes.find((n) => n.id === neighborId)
-        if (neighborNode) {
-          const childNode = {
-            ...neighborNode,
-            children: [],
-            depth: currentHierarchyNode.depth + 1,
-          }
-          currentHierarchyNode.children.push(childNode)
-          nodeMap.set(neighborId, childNode)
-          visited.add(neighborId)
-          queue.push({ node: neighborNode, parent: currentNode })
-        }
-      }
-    })
-  }
-
-  // Add orphaned nodes as children of root
-  nodes.forEach((node) => {
-    if (!visited.has(node.id)) {
-      root.children.push({
-        ...node,
-        children: [],
-        depth: 1,
-      })
-    }
-  })
-
-  return root
-}
-
-// Node type colors
-const getNodeColor = (type: string) => {
-  const colors = {
-    concept: "#4D4D4D",
-    person: "#2D3A8C",
-    event: "#F4C95D",
-    theory: "#2D3A8C",
-    work: "#2D3A8C",
-    movement: "#F4C95D",
-  }
-  return colors[type as keyof typeof colors] || "#4D4D4D"
-}
-
-// Node size based on importance
-const getNodeSize = (importance: number) => {
-  return Math.max(8, 4 + importance * 2)
-}
-
 export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3ConceptMapProps) {
   const svgRef = useRef<SVGSVGElement>(null)
-  const zoomBehavior = useRef<d3.ZoomBehavior<Element, unknown>>()
+  const containerRef = useRef<HTMLDivElement>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredDisciplines, setFilteredDisciplines] = useState<string[]>([])
   const [selectedNode, setSelectedNode] = useState<any>(null)
   const [complexity, setComplexity] = useState(initialComplexity)
   const [zoomLevel, setZoomLevel] = useState(1)
+
+  const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
+  const svgSelectionRef = useRef<d3.Selection<SVGSVGElement, unknown, null, undefined> | null>(null)
+  const zoomRef = useRef<{ zoomIn: () => void; zoomOut: () => void; fitView: () => void } | null>(null)
 
   // Filter nodes based on complexity
   const filteredNodes = useMemo(() => {
@@ -179,7 +92,10 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       const searchLower = searchTerm.toLowerCase()
       filtered = filtered.filter(
         (node) =>
-          node.label?.toLowerCase().includes(searchLower) || node.description?.toLowerCase().includes(searchLower),
+          node.label?.toLowerCase().includes(searchLower) ||
+          node.description?.toLowerCase().includes(searchLower) ||
+          node.location?.toLowerCase().includes(searchLower) ||
+          node.period?.toLowerCase().includes(searchLower),
       )
     }
 
@@ -190,10 +106,11 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
     return filtered
   }, [filteredNodes, searchTerm, filteredDisciplines])
 
-  // Create hierarchical data
-  const hierarchicalData = useMemo(() => {
-    return createHierarchicalData(finalFilteredNodes, filteredEdges)
-  }, [finalFilteredNodes, filteredEdges])
+  // Filter edges to only include those between visible nodes
+  const finalFilteredEdges = useMemo(() => {
+    const visibleNodeIds = new Set(finalFilteredNodes.map((node) => node.id))
+    return filteredEdges.filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
+  }, [filteredEdges, finalFilteredNodes])
 
   // Find related nodes and edges for the selected node
   const relatedNodesAndEdges = useMemo(() => {
@@ -218,77 +135,461 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
     setZoomLevel(zoom)
   }, [])
 
-  useEffect(() => {
-    if (!svgRef.current || !hierarchicalData) return
+  // Get node styles based on type
+  const getNodeStyles = (type: string) => {
+    switch (type) {
+      case "person":
+        return {
+          background: "#F6F5EF",
+          border: "2px solid #2D3A8C",
+          iconBg: "#2D3A8C",
+          textColor: "#2D3A8C",
+          icon: "👤",
+        }
+      case "concept":
+        return {
+          background: "white",
+          border: "2px solid #4D4D4D",
+          iconBg: "#4D4D4D",
+          textColor: "#1A1A1A",
+          icon: "💡",
+        }
+      case "event":
+        return {
+          background: "white",
+          border: "4px solid #F4C95D",
+          borderStyle: "border-left",
+          iconBg: "#F4C95D",
+          textColor: "#1A1A1A",
+          icon: "📅",
+        }
+      case "theory":
+        return {
+          background: "white",
+          border: "2px solid #2D3A8C",
+          iconBg: "#2D3A8C",
+          textColor: "#2D3A8C",
+          icon: "🧠",
+        }
+      case "work":
+        return {
+          background: "white",
+          border: "4px solid #2D3A8C",
+          borderStyle: "border-left",
+          iconBg: "#2D3A8C",
+          textColor: "#2D3A8C",
+          icon: "📚",
+        }
+      case "movement":
+        return {
+          background: "#F6F5EF",
+          border: "2px solid #F4C95D",
+          iconBg: "#F4C95D",
+          textColor: "#1A1A1A",
+          icon: "👥",
+        }
+      case "place":
+        return {
+          background: "#E8F5E8",
+          border: "2px solid #4CAF50",
+          iconBg: "#4CAF50",
+          textColor: "#1A1A1A",
+          icon: "🌍",
+        }
+      case "organization":
+        return {
+          background: "#FFF3E0",
+          border: "2px solid #FF9800",
+          iconBg: "#FF9800",
+          textColor: "#1A1A1A",
+          icon: "🏢",
+        }
+      case "technology":
+        return {
+          background: "#E3F2FD",
+          border: "2px solid #2196F3",
+          iconBg: "#2196F3",
+          textColor: "#1A1A1A",
+          icon: "⚙️",
+        }
+      case "discovery":
+      case "invention":
+        return {
+          background: "#F3E5F5",
+          border: "2px solid #9C27B0",
+          iconBg: "#9C27B0",
+          textColor: "#1A1A1A",
+          icon: "🔬",
+        }
+      case "method":
+      case "technique":
+      case "process":
+        return {
+          background: "#E0F2F1",
+          border: "2px solid #009688",
+          iconBg: "#009688",
+          textColor: "#1A1A1A",
+          icon: "🔧",
+        }
+      case "principle":
+      case "law":
+      case "phenomenon":
+        return {
+          background: "#FFF8E1",
+          border: "2px solid #FFC107",
+          iconBg: "#FFC107",
+          textColor: "#1A1A1A",
+          icon: "⚡",
+        }
+      case "system":
+      case "structure":
+        return {
+          background: "#EFEBE9",
+          border: "2px solid #795548",
+          iconBg: "#795548",
+          textColor: "#1A1A1A",
+          icon: "🏗️",
+        }
+      case "resource":
+      case "tool":
+        return {
+          background: "#E8EAF6",
+          border: "2px solid #3F51B5",
+          iconBg: "#3F51B5",
+          textColor: "#1A1A1A",
+          icon: "🛠️",
+        }
+      case "culture":
+      case "tradition":
+      case "practice":
+        return {
+          background: "#FCE4EC",
+          border: "2px solid #E91E63",
+          iconBg: "#E91E63",
+          textColor: "#1A1A1A",
+          icon: "🎭",
+        }
+      case "ideology":
+      case "belief":
+      case "value":
+        return {
+          background: "#F1F8E9",
+          border: "2px solid #8BC34A",
+          iconBg: "#8BC34A",
+          textColor: "#1A1A1A",
+          icon: "💭",
+        }
+      default:
+        return {
+          background: "white",
+          border: "2px solid #4D4D4D",
+          iconBg: "#4D4D4D",
+          textColor: "#1A1A1A",
+          icon: "⚪",
+        }
+    }
+  }
 
+  useEffect(() => {
+    if (!svgRef.current || !containerRef.current || !finalFilteredNodes.length) return
+
+    const container = containerRef.current
     const svg = d3.select(svgRef.current)
+
+    // Clear previous content
     svg.selectAll("*").remove()
 
-    const width = 1200
-    const height = 800
+    // Get container dimensions
+    const rect = container.getBoundingClientRect()
+    const width = rect.width
+    const height = rect.height
+
+    // Set SVG dimensions
+    svg.attr("width", width).attr("height", height)
+
+    // Create main group for zoom/pan
+    const g = svg.append("g")
 
     // Create zoom behavior
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 3])
       .on("zoom", (event) => {
-        container.attr("transform", event.transform)
+        g.attr("transform", event.transform)
         onZoomChange(event.transform.k)
       })
 
     svg.call(zoom)
-    // zoomBehavior.current = zoom
 
-    const container = svg.append("g")
+    svgSelectionRef.current = svg
+    zoomBehaviorRef.current = zoom
 
-    // Create hierarchy
-    const root = d3.hierarchy(hierarchicalData)
-    const links = root.links()
-    const nodes = root.descendants()
+    zoomRef.current = {
+      zoomIn: () => svg.transition().duration(250).call(zoom.scaleBy, 1.2),
+      zoomOut: () => svg.transition().duration(250).call(zoom.scaleBy, 0.8),
+      fitView: () => {
+        const bounds = g.node()?.getBBox()
+        if (!bounds) return
+        const fullWidth = width
+        const fullHeight = height
+        const scale = Math.min(fullWidth / bounds.width, fullHeight / bounds.height) * 0.7
+        const centerX = fullWidth / 2
+        const centerY = fullHeight / 2
+        svg
+          .transition()
+          .duration(750)
+          .call(
+            zoom.transform,
+            d3.zoomIdentity
+              .translate(centerX, centerY)
+              .scale(scale)
+              .translate(-bounds.x - bounds.width / 2, -bounds.y - bounds.height / 2),
+          )
+      },
+    }
 
-    // Create force simulation
+    // Prepare data for simulation
+    const nodes = finalFilteredNodes.map((node) => ({
+      ...node,
+      x: width / 2 + (Math.random() - 0.5) * 400,
+      y: height / 2 + (Math.random() - 0.5) * 400,
+    }))
+
+    const links = finalFilteredEdges.map((edge) => ({
+      ...edge,
+      source: edge.source,
+      target: edge.target,
+    }))
+
+    // Create force simulation with better spacing
     const simulation = d3
-      .forceSimulation(nodes as any)
+      .forceSimulation(nodes)
       .force(
         "link",
         d3
           .forceLink(links)
           .id((d: any) => d.id)
-          .distance(100)
-          .strength(0.5),
+          .distance((d: any) => {
+            // Adjust distances based on relationship type
+            const baseDistance = 300
+            switch (d.type) {
+              case "part_of":
+              case "contains":
+                return baseDistance * 0.7
+              case "builds_upon":
+              case "evolves_from":
+                return baseDistance * 0.9
+              case "influences":
+              case "causes":
+              case "leads_to":
+                return baseDistance * 1.2
+              case "similar_to":
+              case "competes_with":
+                return baseDistance * 1.0
+              case "located_in":
+              case "occurs_in":
+                return baseDistance * 0.8
+              default:
+                return baseDistance
+            }
+          })
+          .strength(0.3),
       )
-      .force("charge", d3.forceManyBody().strength(-1000))
-      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force(
+        "charge",
+        d3.forceManyBody().strength((d: any) => {
+          const baseStrength = -2000
+          return baseStrength * (1 + (d.importance || 5) / 10)
+        }),
+      )
+      .force("center", d3.forceCenter(width / 2, height / 2).strength(0.05))
       .force(
         "collision",
-        d3.forceCollide().radius((d: any) => getNodeSize(d.data.importance || 5) + 5),
+        d3
+          .forceCollide()
+          .radius((d: any) => {
+            const baseRadius = 120
+            return baseRadius + (d.importance || 5) * 8
+          })
+          .strength(1.0),
       )
+      .force("radial", d3.forceRadial(200, width / 2, height / 2).strength(0.02))
+      .force("x", d3.forceX(width / 2).strength(0.02))
+      .force("y", d3.forceY(height / 2).strength(0.02))
 
-    // Create links
-    const link = container
-      .append("g")
-      .attr("class", "links")
+    // Create links group
+    const linkGroup = g.append("g").attr("class", "links")
+
+    // Create links with different colors based on relationship type
+    const link = linkGroup
       .selectAll("line")
       .data(links)
       .enter()
       .append("line")
-      .attr("stroke", "#999")
-      .attr("stroke-opacity", 0.6)
-      .attr("stroke-width", 2)
+      .attr("stroke", (d: any) => {
+        switch (d.type) {
+          case "influences":
+          case "builds_upon":
+          case "evolves_from":
+            return "#2D3A8C"
+          case "critiques":
+          case "contradicts":
+          case "opposes":
+            return "#E63946"
+          case "causes":
+          case "leads_to":
+          case "results_in":
+            return "#FF6B35"
+          case "part_of":
+          case "contains":
+          case "located_in":
+            return "#4D4D4D"
+          case "similar_to":
+          case "competes_with":
+            return "#9C27B0"
+          case "collaborates_with":
+          case "supports":
+            return "#4CAF50"
+          case "created_by":
+          case "discovered_by":
+          case "invented_by":
+            return "#FF9800"
+          default:
+            return "#999"
+        }
+      })
+      .attr("stroke-opacity", 0.4)
+      .attr("stroke-width", (d: any) => 1 + (d.strength || 1) * 0.3)
+      .attr("stroke-dasharray", (d: any) => {
+        return d.type === "critiques" || d.type === "similar_to" || d.type === "different_from" ? "5,5" : "none"
+      })
 
-    // Create nodes
-    const node = container
+    // Create link labels (only show for important connections)
+    const linkLabels = g
       .append("g")
-      .attr("class", "nodes")
-      .selectAll("g")
+      .attr("class", "link-labels")
+      .selectAll("text")
+      .data(links.filter((d: any) => (d.strength || 0) >= 4))
+      .enter()
+      .append("text")
+      .attr("font-size", "9px")
+      .attr("font-family", "Inter, sans-serif")
+      .attr("fill", "#666")
+      .attr("text-anchor", "middle")
+      .attr("dy", -2)
+      .style("pointer-events", "none")
+      .style("opacity", 0.7)
+      .text((d: any) => d.label)
+
+    // Create nodes group
+    const nodeGroup = g.append("g").attr("class", "nodes")
+
+    // Create nodes using foreignObject to embed HTML
+    const node = nodeGroup
+      .selectAll("foreignObject")
       .data(nodes)
       .enter()
-      .append("g")
-      .attr("class", "node")
-      .style("cursor", "pointer")
+      .append("foreignObject")
+      .attr("width", (d: any) => Math.max(160, 160 + d.importance * 8))
+      .attr("height", 100)
+      .style("overflow", "visible")
+      .html((d: any) => {
+        const width = Math.max(160, 160 + d.importance * 8)
+        const isSelected = selectedNode?.id === d.id
+        const styles = getNodeStyles(d.type)
+        const selectedClass = isSelected ? "ring-2 ring-blue-500 ring-offset-2" : ""
+
+        return `
+          <div class="concept-node ${selectedClass}" style="
+            width: ${width}px;
+            min-height: 80px;
+            background: ${styles.background};
+            border: ${styles.border};
+            ${styles.borderStyle === "border-left" ? "border-left: 4px solid " + styles.iconBg + "; border-top: 1px solid #E0E1E6; border-right: 1px solid #E0E1E6; border-bottom: 1px solid #E0E1E6;" : ""}
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            cursor: pointer;
+            font-family: Inter, sans-serif;
+          ">
+            <div style="display: flex; align-items: flex-start; gap: 8px; height: 100%;">
+              ${
+                d.type === "concept"
+                  ? ""
+                  : `<div style="
+                background: ${styles.iconBg};
+                border-radius: 50%;
+                padding: 4px;
+                flex-shrink: 0;
+                margin-top: 2px;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+              ">${styles.icon}</div>`
+              }
+              <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                  <h3 style="
+                    font-family: 'DM Serif Display', serif;
+                    color: ${styles.textColor};
+                    font-size: 14px;
+                    font-weight: 500;
+                    line-height: 1.2;
+                    margin: 0;
+                    ${d.type === "work" ? "font-style: italic;" : ""}
+                  ">${d.label}</h3>
+                  ${d.year ? `<span style="font-size: 10px; color: #4D4D4D; margin-left: 4px; flex-shrink: 0;">${d.year}</span>` : ""}
+                </div>
+                <p style="
+                  font-size: 10px;
+                  color: #4D4D4D;
+                  line-height: 1.4;
+                  margin: 0;
+                ">${d.description}</p>
+                ${d.location ? `<div style="font-size: 9px; color: #666; margin-top: 2px;">📍 ${d.location}</div>` : ""}
+                ${d.period ? `<div style="font-size: 9px; color: #666; margin-top: 2px;">⏰ ${d.period}</div>` : ""}
+              </div>
+            </div>
+          </div>
+        `
+      })
+      .on("click", (event, d: any) => {
+        event.stopPropagation()
+        setSelectedNode(d)
+      })
+      .on("mouseover", (event, d: any) => {
+        // Highlight connected edges and nodes
+        link
+          .attr("stroke-opacity", (linkData: any) =>
+            linkData.source.id === d.id || linkData.target.id === d.id ? 0.8 : 0.1,
+          )
+          .attr("stroke-width", (linkData: any) =>
+            linkData.source.id === d.id || linkData.target.id === d.id
+              ? (1 + (linkData.strength || 1) * 0.3) * 2
+              : 1 + (linkData.strength || 1) * 0.3,
+          )
+
+        node.style("opacity", (nodeData: any) => {
+          if (nodeData.id === d.id) return 1
+          const isConnected = links.some(
+            (link: any) =>
+              (link.source.id === d.id && link.target.id === nodeData.id) ||
+              (link.target.id === d.id && link.source.id === nodeData.id),
+          )
+          return isConnected ? 1 : 0.3
+        })
+      })
+      .on("mouseout", (event, d: any) => {
+        link.attr("stroke-opacity", 0.4).attr("stroke-width", (linkData: any) => 1 + (linkData.strength || 1) * 0.3)
+        node.style("opacity", 1)
+      })
       .call(
         d3
-          .drag<SVGGElement, any>()
+          .drag<SVGForeignObjectElement, any>()
           .on("start", (event, d) => {
             if (!event.active) simulation.alphaTarget(0.3).restart()
             d.fx = d.x
@@ -305,57 +606,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           }),
       )
 
-    // Add circles to nodes
-    node
-      .append("circle")
-      .attr("r", (d: any) => getNodeSize(d.data.importance || 5))
-      .attr("fill", (d: any) => getNodeColor(d.data.type))
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 2)
-      .on("click", (event, d: any) => {
-        event.stopPropagation()
-        setSelectedNode(d.data)
-      })
-      .on("mouseover", function (event, d: any) {
-        d3.select(this).attr("stroke", "#2D3A8C").attr("stroke-width", 3)
-
-        // Show tooltip
-        // const tooltip = d3
-        //   .select("body")
-        //   .append("div")
-        //   .attr("class", "tooltip")
-        //   .style("position", "absolute")
-        //   .style("background", "rgba(0, 0, 0, 0.8)")
-        //   .style("color", "white")
-        //   .style("padding", "8px")
-        //   .style("border-radius", "4px")
-        //   .style("font-size", "12px")
-        //   .style("pointer-events", "none")
-        //   .style("z-index", "1000")
-        //   .html(`<strong>${d.data.label}</strong><br/>${d.data.description}`)
-
-        // tooltip
-        //   .style("left", event.pageX + 10 + "px")
-        //   .style("top", event.pageY - 10 + "px")
-        //   .style("opacity", 1)
-      })
-      .on("mouseout", function (event, d: any) {
-        d3.select(this).attr("stroke", "#fff").attr("stroke-width", 2)
-        d3.selectAll(".tooltip").remove()
-      })
-
-    // Add labels to nodes
-    node
-      .append("text")
-      .text((d: any) => d.data.label)
-      .attr("font-size", "10px")
-      .attr("font-family", "Inter, sans-serif")
-      .attr("text-anchor", "middle")
-      .attr("dy", (d: any) => getNodeSize(d.data.importance || 5) + 15)
-      .attr("fill", "#333")
-      .style("pointer-events", "none")
-
-    // Update positions on simulation tick
+    // Update positions on tick
     simulation.on("tick", () => {
       link
         .attr("x1", (d: any) => d.source.x)
@@ -363,37 +614,32 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
         .attr("x2", (d: any) => d.target.x)
         .attr("y2", (d: any) => d.target.y)
 
-      node.attr("transform", (d: any) => `translate(${d.x},${d.y})`)
+      linkLabels
+        .attr("x", (d: any) => (d.source.x + d.target.x) / 2)
+        .attr("y", (d: any) => (d.source.y + d.target.y) / 2)
+
+      node.attr("x", (d: any) => d.x - 80).attr("y", (d: any) => d.y - 40)
     })
 
-    // Initial zoom to fit
-    const bounds = container.node()?.getBBox()
-    if (bounds) {
-      const fullWidth = svg.node()?.clientWidth || width
-      const fullHeight = svg.node()?.clientHeight || height
-      const scale = Math.min(fullWidth / bounds.width, fullHeight / bounds.height) * 0.8
-      const centerX = fullWidth / 2
-      const centerY = fullHeight / 2
+    // Click outside to deselect
+    svg.on("click", (event) => {
+      if (event.target === svg.node()) {
+        setSelectedNode(null)
+      }
+    })
 
-      svg
-        .transition()
-        .duration(750)
-        // .call(
-        //   zoom.transform,
-        //   d3.zoomIdentity
-        //     .translate(centerX, centerY)
-        //     .scale(scale)
-        //     .translate(-bounds.x - bounds.width / 2, -bounds.y - bounds.height / 2),
-        // )
-    }
+    // Initial zoom to fit after simulation settles
+    setTimeout(() => {
+      zoomRef.current?.fitView()
+    }, 2000)
 
     return () => {
       simulation.stop()
     }
-  }, [hierarchicalData, onZoomChange])
+  }, [finalFilteredNodes, finalFilteredEdges, onZoomChange, selectedNode])
 
   return (
-    <div className="w-full h-full relative">
+    <div className="w-full h-full relative" ref={containerRef}>
       {/* Summary Panel */}
       {/* <div className="absolute top-4 left-4 bg-white p-4 rounded-card shadow-card max-w-sm z-10">
         <h3 className="font-heading text-lg text-primary mb-2">Summary</h3>
@@ -403,81 +649,105 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
             <span className="font-medium">Timespan:</span> {data.timespan.start} - {data.timespan.end}
           </div>
         )}
-        <div className="mt-3 text-xs text-textSecondary">
-          <span className="font-medium">Disciplines:</span> {data.disciplines?.join(", ")}
+        {data.geography && data.geography.length > 0 && (
+          <div className="mt-2 text-xs text-textSecondary">
+            <span className="font-medium">Geography:</span> {data.geography.join(", ")}
+          </div>
+        )}
+        <div className="mt-2 text-xs text-textSecondary">
+          <span className="font-medium">Fields:</span> {data.disciplines?.join(", ")}
         </div>
+        {data.keyThemes && data.keyThemes.length > 0 && (
+          <div className="mt-2 text-xs text-textSecondary">
+            <span className="font-medium">Key Themes:</span> {data.keyThemes.join(", ")}
+          </div>
+        )}
       </div> */}
 
       {/* Controls Panel */}
-      {/* <div className="absolute top-4 right-4 z-10"> */}
-        {/* <D3MapControls
+      <div className="absolute top-4 right-4 z-10">
+        <MapControls
           disciplines={data.disciplines || []}
           filteredDisciplines={filteredDisciplines}
           setFilteredDisciplines={setFilteredDisciplines}
           zoomLevel={zoomLevel}
-          zoomIn={() => {
-            if (svgRef.current && zoomBehavior.current)
-              d3.select(svgRef.current).call(zoomBehavior.current.scaleBy as any, 1.2)
-          }}
-          zoomOut={() => {
-            if (svgRef.current && zoomBehavior.current)
-              d3.select(svgRef.current).call(zoomBehavior.current.scaleBy as any, 0.8)
-          }}
-          fitView={() => {
-            // same logic as initial fit
-            const svgEl = svgRef.current
-            const g = svgEl?.querySelector("g")
-            if (!svgEl || !g || !zoomBehavior.current) return
-            const bounds = (g as SVGGElement).getBBox()
-            const fullW = svgEl.clientWidth
-            const fullH = svgEl.clientHeight
-            const scale = Math.min(fullW / bounds.width, fullH / bounds.height) * 0.8
-            const centerX = fullW / 2
-            const centerY = fullH / 2
-            d3.select(svgEl)
-              .transition()
-              .duration(600)
-              .call(
-                zoomBehavior.current.transform as any,
-                d3.zoomIdentity
-                  .translate(centerX, centerY)
-                  .scale(scale)
-                  .translate(-bounds.x - bounds.width / 2, -bounds.y - bounds.height / 2),
-              )
-          }}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           complexity={complexity}
           setComplexity={setComplexity}
-        /> */}
-      {/* </div> */}
+          onZoomIn={() => zoomRef.current?.zoomIn()}
+          onZoomOut={() => zoomRef.current?.zoomOut()}
+          onFitView={() => zoomRef.current?.fitView()}
+        />
+      </div>
 
-      {/* Legend Panel */}
-      <div className="absolute bottom-20 right-4 bg-white p-3 rounded-card shadow-card z-10">
+      {/* Enhanced Legend Panel */}
+      <div className="absolute bottom-4 right-4 bg-white p-3 rounded-card shadow-card z-10 max-h-80 overflow-y-auto">
         <h4 className="font-medium text-textPrimary text-sm mb-2">Node Types</h4>
-        <div className="space-y-1 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-primary rounded-full"></div>
+        <div className="grid grid-cols-2 gap-1 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-primary rounded border"></div>
             <span>Person</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-textSecondary rounded-full"></div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-textSecondary rounded border"></div>
             <span>Concept</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-accent rounded-full"></div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-accent rounded border"></div>
             <span>Event</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-primary rounded-full"></div>
-            <span>Theory/Work</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-green-500 rounded border"></div>
+            <span>Place</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-orange-500 rounded border"></div>
+            <span>Organization</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-blue-500 rounded border"></div>
+            <span>Technology</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-purple-500 rounded border"></div>
+            <span>Discovery</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-teal-500 rounded border"></div>
+            <span>Method</span>
+          </div>
+        </div>
+        <div className="mt-3">
+          <h5 className="font-medium text-textPrimary text-xs mb-1">Relationships</h5>
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-0.5 bg-primary"></div>
+              <span>Influences/Builds Upon</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-0.5 bg-red-500"></div>
+              <span>Critiques/Opposes</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-0.5 bg-orange-500"></div>
+              <span>Causes/Leads To</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-0.5 bg-textSecondary"></div>
+              <span>Part Of/Contains</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-0.5 bg-green-500"></div>
+              <span>Supports/Collaborates</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Results Info */}
       {(searchTerm || filteredDisciplines.length > 0 || complexity !== "thorough") && (
-        <div className="absolute bottom-20 left-4 bg-white p-3 rounded-card shadow-card z-10">
+        <div className="absolute bottom-4 left-4 bg-white p-3 rounded-card shadow-card z-10">
           <div className="text-sm text-textSecondary">
             <div className="flex items-center gap-2">
               <Layers className="h-4 w-4 text-primary" />
@@ -488,6 +758,9 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
             <div className="mt-1">
               Showing <span className="font-medium text-primary">{finalFilteredNodes.length}</span> of{" "}
               <span className="font-medium">{data.nodes?.length || 0}</span> nodes
+            </div>
+            <div className="mt-1">
+              <span className="font-medium text-primary">{finalFilteredEdges.length}</span> relationships
             </div>
             {searchTerm && (
               <div className="mt-1">
@@ -521,7 +794,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       )}
 
       {/* SVG Container */}
-      <svg ref={svgRef} className="w-full h-full bg-background" viewBox="0 0 1200 800" />
+      <svg ref={svgRef} className="w-full h-full bg-background" />
     </div>
   )
 }
