@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import * as d3 from "d3"
-import { MapControls } from "./map-controls"
-import { NodeDetailPanel } from "./node-detail-panel"
+import { MapControls } from "./MapControls"
+import { NodeDetailPanel } from "./NodeDetailPanel"
 import { X, Layers } from "lucide-react"
 
 interface D3ConceptMapProps {
@@ -140,151 +140,151 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
     switch (type) {
       case "person":
         return {
-          background: "#F6F5EF",
-          border: "2px solid #2D3A8C",
-          iconBg: "#2D3A8C",
-          textColor: "#2D3A8C",
+          background: "#F0F4FF",
+          border: "2px solid #7C6AE8",
+          iconBg: "#7C6AE8",
+          textColor: "#5B3BB8",
           icon: "👤",
         }
       case "concept":
         return {
           background: "white",
-          border: "2px solid #4D4D4D",
-          iconBg: "#4D4D4D",
-          textColor: "#1A1A1A",
+          border: "2px solid #64748B",
+          iconBg: "#64748B",
+          textColor: "#1E293B",
           icon: "💡",
         }
       case "event":
         return {
           background: "white",
-          border: "4px solid #F4C95D",
+          border: "4px solid #EE9B56",
           borderStyle: "border-left",
-          iconBg: "#F4C95D",
-          textColor: "#1A1A1A",
+          iconBg: "#EE9B56",
+          textColor: "#1E293B",
           icon: "📅",
         }
       case "theory":
         return {
           background: "white",
-          border: "2px solid #2D3A8C",
-          iconBg: "#2D3A8C",
-          textColor: "#2D3A8C",
+          border: "2px solid #7C6AE8",
+          iconBg: "#7C6AE8",
+          textColor: "#5B3BB8",
           icon: "🧠",
         }
       case "work":
         return {
           background: "white",
-          border: "4px solid #2D3A8C",
+          border: "4px solid #7C6AE8",
           borderStyle: "border-left",
-          iconBg: "#2D3A8C",
-          textColor: "#2D3A8C",
+          iconBg: "#7C6AE8",
+          textColor: "#5B3BB8",
           icon: "📚",
         }
       case "movement":
         return {
-          background: "#F6F5EF",
-          border: "2px solid #F4C95D",
-          iconBg: "#F4C95D",
-          textColor: "#1A1A1A",
+          background: "#F0F4FF",
+          border: "2px solid #EE9B56",
+          iconBg: "#EE9B56",
+          textColor: "#1E293B",
           icon: "👥",
         }
       case "place":
         return {
-          background: "#E8F5E8",
-          border: "2px solid #4CAF50",
-          iconBg: "#4CAF50",
-          textColor: "#1A1A1A",
+          background: "#F0FDF4",
+          border: "2px solid #22C55E",
+          iconBg: "#22C55E",
+          textColor: "#1E293B",
           icon: "🌍",
         }
       case "organization":
         return {
-          background: "#FFF3E0",
-          border: "2px solid #FF9800",
-          iconBg: "#FF9800",
-          textColor: "#1A1A1A",
+          background: "#FFFBEB",
+          border: "2px solid #F59E0B",
+          iconBg: "#F59E0B",
+          textColor: "#1E293B",
           icon: "🏢",
         }
       case "technology":
         return {
-          background: "#E3F2FD",
-          border: "2px solid #2196F3",
-          iconBg: "#2196F3",
-          textColor: "#1A1A1A",
+          background: "#EFF6FF",
+          border: "2px solid #3B82F6",
+          iconBg: "#3B82F6",
+          textColor: "#1E293B",
           icon: "⚙️",
         }
       case "discovery":
       case "invention":
         return {
-          background: "#F3E5F5",
-          border: "2px solid #9C27B0",
-          iconBg: "#9C27B0",
-          textColor: "#1A1A1A",
+          background: "#FAF5FF",
+          border: "2px solid #A855F7",
+          iconBg: "#A855F7",
+          textColor: "#1E293B",
           icon: "🔬",
         }
       case "method":
       case "technique":
       case "process":
         return {
-          background: "#E0F2F1",
-          border: "2px solid #009688",
-          iconBg: "#009688",
-          textColor: "#1A1A1A",
+          background: "#F0FDFA",
+          border: "2px solid #14B8A6",
+          iconBg: "#14B8A6",
+          textColor: "#1E293B",
           icon: "🔧",
         }
       case "principle":
       case "law":
       case "phenomenon":
         return {
-          background: "#FFF8E1",
-          border: "2px solid #FFC107",
-          iconBg: "#FFC107",
-          textColor: "#1A1A1A",
+          background: "#FFFBEB",
+          border: "2px solid #F59E0B",
+          iconBg: "#F59E0B",
+          textColor: "#1E293B",
           icon: "⚡",
         }
       case "system":
       case "structure":
         return {
-          background: "#EFEBE9",
-          border: "2px solid #795548",
-          iconBg: "#795548",
-          textColor: "#1A1A1A",
+          background: "#F5F5F4",
+          border: "2px solid #78716C",
+          iconBg: "#78716C",
+          textColor: "#1E293B",
           icon: "🏗️",
         }
       case "resource":
       case "tool":
         return {
-          background: "#E8EAF6",
-          border: "2px solid #3F51B5",
-          iconBg: "#3F51B5",
-          textColor: "#1A1A1A",
+          background: "#EEF2FF",
+          border: "2px solid #6366F1",
+          iconBg: "#6366F1",
+          textColor: "#1E293B",
           icon: "🛠️",
         }
       case "culture":
       case "tradition":
       case "practice":
         return {
-          background: "#FCE4EC",
-          border: "2px solid #E91E63",
-          iconBg: "#E91E63",
-          textColor: "#1A1A1A",
+          background: "#FDF2F8",
+          border: "2px solid #EC4899",
+          iconBg: "#EC4899",
+          textColor: "#1E293B",
           icon: "🎭",
         }
       case "ideology":
       case "belief":
       case "value":
         return {
-          background: "#F1F8E9",
-          border: "2px solid #8BC34A",
-          iconBg: "#8BC34A",
-          textColor: "#1A1A1A",
+          background: "#F7FEE7",
+          border: "2px solid #84CC16",
+          iconBg: "#84CC16",
+          textColor: "#1E293B",
           icon: "💭",
         }
       default:
         return {
           background: "white",
-          border: "2px solid #4D4D4D",
-          iconBg: "#4D4D4D",
-          textColor: "#1A1A1A",
+          border: "2px solid #64748B",
+          iconBg: "#64748B",
+          textColor: "#1E293B",
           icon: "⚪",
         }
     }
@@ -316,7 +316,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       .scaleExtent([0.1, 3])
       .on("zoom", (event) => {
         g.attr("transform", event.transform)
-        onZoomChange(event.transform.k)
+        onZoomChange(event.transform)
       })
 
     svg.call(zoom)
@@ -346,6 +346,18 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
               .translate(-bounds.x - bounds.width / 2, -bounds.y - bounds.height / 2),
           )
       },
+      // navigateTo: (x: number, y: number) => {
+      //   svg
+      //     .transition()
+      //     .duration(500)
+      //     .call(
+      //       zoom.transform,
+      //       d3.zoomIdentity
+      //         .translate(width / 2, height / 2)
+      //         .scale(currentTransform.k)
+      //         .translate(-x, -y),
+      //     )
+      // },
     }
 
     // Prepare data for simulation
@@ -431,31 +443,31 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           case "influences":
           case "builds_upon":
           case "evolves_from":
-            return "#2D3A8C"
+            return "#7C6AE8"
           case "critiques":
           case "contradicts":
           case "opposes":
-            return "#E63946"
+            return "#EF4444"
           case "causes":
           case "leads_to":
           case "results_in":
-            return "#FF6B35"
+            return "#EE9B56"
           case "part_of":
           case "contains":
           case "located_in":
-            return "#4D4D4D"
+            return "#64748B"
           case "similar_to":
           case "competes_with":
-            return "#9C27B0"
+            return "#A855F7"
           case "collaborates_with":
           case "supports":
-            return "#4CAF50"
+            return "#22C55E"
           case "created_by":
           case "discovered_by":
           case "invented_by":
-            return "#FF9800"
+            return "#F59E0B"
           default:
-            return "#999"
+            return "#94A3B8"
         }
       })
       .attr("stroke-opacity", 0.4)
@@ -474,7 +486,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       .append("text")
       .attr("font-size", "9px")
       .attr("font-family", "Inter, sans-serif")
-      .attr("fill", "#666")
+      .attr("fill", "#64748B")
       .attr("text-anchor", "middle")
       .attr("dy", -2)
       .style("pointer-events", "none")
@@ -497,7 +509,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
         const width = Math.max(160, 160 + d.importance * 8)
         const isSelected = selectedNode?.id === d.id
         const styles = getNodeStyles(d.type)
-        const selectedClass = isSelected ? "ring-2 ring-blue-500 ring-offset-2" : ""
+        const selectedClass = isSelected ? "ring-2 ring-primary-400 ring-offset-2" : ""
 
         return `
           <div class="concept-node ${selectedClass}" style="
@@ -505,13 +517,14 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
             min-height: 80px;
             background: ${styles.background};
             border: ${styles.border};
-            ${styles.borderStyle === "border-left" ? "border-left: 4px solid " + styles.iconBg + "; border-top: 1px solid #E0E1E6; border-right: 1px solid #E0E1E6; border-bottom: 1px solid #E0E1E6;" : ""}
-            border-radius: 8px;
+            ${styles.borderStyle === "border-left" ? "border-left: 4px solid " + styles.iconBg + "; border-top: 1px solid #F1F5F9; border-right: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9;" : ""}
+            border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             transition: all 0.2s;
             cursor: pointer;
             font-family: Inter, sans-serif;
+            backdrop-filter: blur(8px);
           ">
             <div style="display: flex; align-items: flex-start; gap: 8px; height: 100%;">
               ${
@@ -534,24 +547,24 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
               <div style="flex: 1; min-width: 0;">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
                   <h3 style="
-                    font-family: 'DM Serif Display', serif;
+                    font-family: Inter, sans-serif;
                     color: ${styles.textColor};
                     font-size: 14px;
-                    font-weight: 500;
+                    font-weight: 600;
                     line-height: 1.2;
                     margin: 0;
                     ${d.type === "work" ? "font-style: italic;" : ""}
                   ">${d.label}</h3>
-                  ${d.year ? `<span style="font-size: 10px; color: #4D4D4D; margin-left: 4px; flex-shrink: 0;">${d.year}</span>` : ""}
+                  ${d.year ? `<span style="font-size: 10px; color: #64748B; margin-left: 4px; flex-shrink: 0;">${d.year}</span>` : ""}
                 </div>
                 <p style="
                   font-size: 10px;
-                  color: #4D4D4D;
+                  color: #64748B;
                   line-height: 1.4;
                   margin: 0;
                 ">${d.description}</p>
-                ${d.location ? `<div style="font-size: 9px; color: #666; margin-top: 2px;">📍 ${d.location}</div>` : ""}
-                ${d.period ? `<div style="font-size: 9px; color: #666; margin-top: 2px;">⏰ ${d.period}</div>` : ""}
+                ${d.location ? `<div style="font-size: 9px; color: #64748B; margin-top: 2px;">📍 ${d.location}</div>` : ""}
+                ${d.period ? `<div style="font-size: 9px; color: #64748B; margin-top: 2px;">⏰ ${d.period}</div>` : ""}
               </div>
             </div>
           </div>
@@ -636,13 +649,17 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
     return () => {
       simulation.stop()
     }
-  }, [finalFilteredNodes, finalFilteredEdges, onZoomChange, selectedNode])
+  }, [
+    finalFilteredNodes,
+    finalFilteredEdges,
+    onZoomChange,
+    selectedNode])
 
   return (
     <div className="w-full h-full relative" ref={containerRef}>
       {/* Summary Panel */}
-      {/* <div className="absolute top-4 left-4 bg-white p-4 rounded-card shadow-card max-w-sm z-10">
-        <h3 className="font-heading text-lg text-primary mb-2">Summary</h3>
+      <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-elevated max-w-sm z-10 border border-surface/50">
+        <h3 className="font-heading text-lg font-semibold text-primary-600 mb-2">Summary</h3>
         <p className="text-sm text-textSecondary leading-relaxed">{data.summary}</p>
         {data.timespan && (
           <div className="mt-3 text-xs text-textSecondary">
@@ -662,7 +679,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
             <span className="font-medium">Key Themes:</span> {data.keyThemes.join(", ")}
           </div>
         )}
-      </div> */}
+      </div>
 
       {/* Controls Panel */}
       <div className="absolute top-4 right-4 z-10">
@@ -682,11 +699,11 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       </div>
 
       {/* Enhanced Legend Panel */}
-      <div className="absolute bottom-4 right-4 bg-white p-3 rounded-card shadow-card z-10 max-h-80 overflow-y-auto">
+      <div className="absolute bottom-4 right-72 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-elevated z-10 max-h-80 overflow-y-auto border border-surface/50">
         <h4 className="font-medium text-textPrimary text-sm mb-2">Node Types</h4>
         <div className="grid grid-cols-2 gap-1 text-xs">
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-primary rounded border"></div>
+            <div className="w-2 h-2 bg-primary-500 rounded border"></div>
             <span>Person</span>
           </div>
           <div className="flex items-center gap-1">
@@ -694,19 +711,19 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
             <span>Concept</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-accent rounded border"></div>
+            <div className="w-2 h-2 bg-accent-500 rounded border"></div>
             <span>Event</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded border"></div>
+            <div className="w-2 h-2 bg-success-500 rounded border"></div>
             <span>Place</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-orange-500 rounded border"></div>
+            <div className="w-2 h-2 bg-warning-500 rounded border"></div>
             <span>Organization</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-blue-500 rounded border"></div>
+            <div className="w-2 h-2 bg-info-500 rounded border"></div>
             <span>Technology</span>
           </div>
           <div className="flex items-center gap-1">
@@ -722,7 +739,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           <h5 className="font-medium text-textPrimary text-xs mb-1">Relationships</h5>
           <div className="space-y-1 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-0.5 bg-primary"></div>
+              <div className="w-4 h-0.5 bg-primary-500"></div>
               <span>Influences/Builds Upon</span>
             </div>
             <div className="flex items-center gap-2">
@@ -730,7 +747,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
               <span>Critiques/Opposes</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-0.5 bg-orange-500"></div>
+              <div className="w-4 h-0.5 bg-accent-500"></div>
               <span>Causes/Leads To</span>
             </div>
             <div className="flex items-center gap-2">
@@ -738,7 +755,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
               <span>Part Of/Contains</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-0.5 bg-green-500"></div>
+              <div className="w-4 h-0.5 bg-success-500"></div>
               <span>Supports/Collaborates</span>
             </div>
           </div>
@@ -746,25 +763,25 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       </div>
 
       {/* Results Info */}
-      {(searchTerm || filteredDisciplines.length > 0 || complexity !== "thorough") && (
-        <div className="absolute bottom-4 left-4 bg-white p-3 rounded-card shadow-card z-10">
+      {(searchTerm || filteredDisciplines.length > 0 || complexity !== "thorough" || timeFilter) && (
+        <div className="absolute bottom-52 left-4 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-elevated z-10 border border-surface/50">
           <div className="text-sm text-textSecondary">
             <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-primary" />
+              <Layers className="h-4 w-4 text-primary-500" />
               <span>
-                Complexity: <span className="font-medium text-primary capitalize">{complexity}</span>
+                Complexity: <span className="font-medium text-primary-600 capitalize">{complexity}</span>
               </span>
             </div>
             <div className="mt-1">
-              Showing <span className="font-medium text-primary">{finalFilteredNodes.length}</span> of{" "}
+              Showing <span className="font-medium text-primary-600">{finalFilteredNodes.length}</span> of{" "}
               <span className="font-medium">{data.nodes?.length || 0}</span> nodes
             </div>
             <div className="mt-1">
-              <span className="font-medium text-primary">{finalFilteredEdges.length}</span> relationships
+              <span className="font-medium text-primary-600">{finalFilteredEdges.length}</span> relationships
             </div>
             {searchTerm && (
               <div className="mt-1">
-                Search: "<span className="font-medium text-primary">{searchTerm}</span>"
+                Search: "<span className="font-medium text-primary-600">{searchTerm}</span>"
               </div>
             )}
           </div>
@@ -773,13 +790,13 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
 
       {/* Node Detail Panel */}
       {selectedNode && (
-        <div className="absolute top-0 right-0 bg-white rounded-l-card shadow-card h-full max-w-md overflow-y-auto z-20 w-80">
+        <div className="absolute top-0 right-0 bg-white/95 backdrop-blur-sm rounded-l-xl shadow-elevated h-full max-w-md overflow-y-auto z-20 w-80 border-l border-surface/50">
           <div className="p-4">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="font-heading text-xl text-primary">{selectedNode.label}</h3>
+              <h3 className="font-heading text-xl font-semibold text-primary-600">{selectedNode.label}</h3>
               <button
                 onClick={() => setSelectedNode(null)}
-                className="p-1 rounded-full hover:bg-surface text-textSecondary"
+                className="p-1 rounded-full hover:bg-surface text-textSecondary transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -794,7 +811,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       )}
 
       {/* SVG Container */}
-      <svg ref={svgRef} className="w-full h-full bg-background" />
+      <svg ref={svgRef} className="w-full h-full bg-gradient-to-br from-background via-primary-50/30 to-accent-50/20" />
     </div>
   )
 }
