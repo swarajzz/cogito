@@ -131,8 +131,8 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
     }
   }, [selectedNode, data])
 
-  const onZoomChange = useCallback((zoom: number) => {
-    setZoomLevel(zoom)
+  const onZoomChange = useCallback((zoom: any) => {
+    setZoomLevel(zoom.k)
   }, [])
 
   // Get node styles based on type
@@ -332,7 +332,8 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
         if (!bounds) return
         const fullWidth = width
         const fullHeight = height
-        const scale = Math.min(fullWidth / bounds.width, fullHeight / bounds.height) * 0.7
+        const rawScale = Math.min(fullWidth / bounds.width, fullHeight / bounds.height) * 1
+        const scale = Math.min(rawScale, 2.0)
         const centerX = fullWidth / 2
         const centerY = fullHeight / 2
         svg
@@ -346,18 +347,6 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
               .translate(-bounds.x - bounds.width / 2, -bounds.y - bounds.height / 2),
           )
       },
-      // navigateTo: (x: number, y: number) => {
-      //   svg
-      //     .transition()
-      //     .duration(500)
-      //     .call(
-      //       zoom.transform,
-      //       d3.zoomIdentity
-      //         .translate(width / 2, height / 2)
-      //         .scale(currentTransform.k)
-      //         .translate(-x, -y),
-      //     )
-      // },
     }
 
     // Prepare data for simulation
@@ -652,13 +641,13 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
   }, [
     finalFilteredNodes,
     finalFilteredEdges,
-    onZoomChange,
-    selectedNode])
+    ]
+  )
 
   return (
     <div className="w-full h-full relative" ref={containerRef}>
       {/* Summary Panel */}
-      <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-elevated max-w-sm z-10 border border-surface/50">
+      <div className="hidden md:block absolute top-4 left-4 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-elevated max-w-sm z-10 border border-surface/50">
         <h3 className="font-heading text-lg font-semibold text-primary-600 mb-2">Summary</h3>
         <p className="text-sm text-textSecondary leading-relaxed">{data.summary}</p>
         {data.timespan && (
@@ -682,7 +671,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       </div>
 
       {/* Controls Panel */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-2 z-10">
         <MapControls
           disciplines={data.disciplines || []}
           filteredDisciplines={filteredDisciplines}
@@ -699,7 +688,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       </div>
 
       {/* Enhanced Legend Panel */}
-      <div className="absolute bottom-4 right-72 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-elevated z-10 max-h-80 overflow-y-auto border border-surface/50">
+       <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-elevated z-10 max-h-80 overflow-y-auto border border-surface/50">
         <h4 className="font-medium text-textPrimary text-sm mb-2">Node Types</h4>
         <div className="grid grid-cols-2 gap-1 text-xs">
           <div className="flex items-center gap-1">
@@ -763,8 +752,8 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       </div>
 
       {/* Results Info */}
-      {(searchTerm || filteredDisciplines.length > 0 || complexity !== "thorough" || timeFilter) && (
-        <div className="absolute bottom-52 left-4 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-elevated z-10 border border-surface/50">
+      {(searchTerm || filteredDisciplines.length > 0 || complexity !== "thorough") && (
+        <div className="hidden md:block absolute bottom-2 left-4 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-elevated z-10 border border-surface/50">
           <div className="text-sm text-textSecondary">
             <div className="flex items-center gap-2">
               <Layers className="h-4 w-4 text-primary-500" />
@@ -790,7 +779,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
 
       {/* Node Detail Panel */}
       {selectedNode && (
-        <div className="absolute top-0 right-0 bg-white/95 backdrop-blur-sm rounded-l-xl shadow-elevated h-full max-w-md overflow-y-auto z-20 w-80 border-l border-surface/50">
+        <div className="absolute top-0 right-2 bg-white/95 backdrop-blur-sm rounded-l-xl shadow-elevated h-full max-w-md overflow-y-auto z-20 w-80 border-l border-surface/50 animate-fade-in">
           <div className="p-4">
             <div className="flex justify-between items-start mb-4">
               <h3 className="font-heading text-xl font-semibold text-primary-600">{selectedNode.label}</h3>
