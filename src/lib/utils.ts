@@ -64,6 +64,6 @@ export function getSystemPrompt(complexityLevel: string) {
         
         ${getComplexityInstructions(complexityLevel)}
         
-        Return ONLY the JSON object, no markdown, no explanations, no code blocks.
+        Return ONLY the JSON object, no markdown, no explanations, no code blocks and ready for direct use with JSON.parse() if needed.
       `.trim();
 }

@@ -29,20 +29,21 @@ export default function Home() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
+
     if (!prompt.trim()) return;
-    
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const systemPrompt = getSystemPrompt(complexityLevel)
-      const response = await puter.ai.chat([
+      const systemPrompt = getSystemPrompt(complexityLevel);
+      const response = await puter.ai.chat(
+        [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Create a concept map for: ${prompt}` },
-      ]);
-
-      console.log(response)
+        ],
+        { model: "x-ai/grok-3-beta" }
+      );
 
       const content = response?.message?.content;
       if (!content) {
