@@ -2,99 +2,130 @@
 
 import { useState } from "react";
 import { Button } from "@/src/components/ui/button";
-import { Textarea } from "@/src/components/ui/textarea";
 import { ConceptMap } from "@/src/components/concept-map";
+import { MapCard } from "@/src/components/MapCard";
+import { CreateMapModal } from "@/src/components/CreateMapModal";
 import {
-  Loader2,
   Brain,
   Sparkles,
-  Layers,
-  Zap,
-  Target,
+  Plus,
+  Search,
+  Grid3X3,
+  List,
+  Clock,
+  Star,
+  TrendingUp,
+  Users,
   Globe,
+  ArrowRight,
 } from "lucide-react";
 import { sampleExistentialismMap } from "@/src/lib/sample-data";
-import { RadioGroup, RadioGroupItem } from "@/src/components/ui/radio-group";
-import { Label } from "@/src/components/ui/label";
+import Link from "next/link";
 import Script from "next/script";
-import { getSystemPrompt } from "@/src/lib/utils";
 
-export default function Home() {
-  const [prompt, setPrompt] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [mapData, setMapData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [showExample, setShowExample] = useState(false);
-  const [complexityLevel, setComplexityLevel] = useState("moderate");
+const mockUser = null;
+const mockUserMaps = [
+  {
+    id: "1",
+    title: "Renaissance Art Movement",
+    description:
+      "Exploring the key figures, works, and cultural impact of Renaissance art",
+    nodeCount: 24,
+    edgeCount: 45,
+    createdAt: "2024-01-15",
+    updatedAt: "2024-01-20",
+    isPublic: true,
+    tags: ["Art", "History", "Culture"],
+    thumbnail: "/placeholder.svg?height=200&width=300",
+  },
+  {
+    id: "2",
+    title: "Machine Learning Fundamentals",
+    description: "Core concepts, algorithms, and applications in modern ML",
+    nodeCount: 18,
+    edgeCount: 32,
+    createdAt: "2024-01-10",
+    updatedAt: "2024-01-18",
+    isPublic: false,
+    tags: ["Technology", "AI", "Computer Science"],
+    thumbnail: "/placeholder.svg?height=200&width=300",
+  },
+  {
+    id: "3",
+    title: "Climate Change Science",
+    description:
+      "Understanding the causes, effects, and solutions to climate change",
+    nodeCount: 31,
+    edgeCount: 58,
+    createdAt: "2024-01-05",
+    updatedAt: "2024-01-15",
+    isPublic: true,
+    tags: ["Science", "Environment", "Policy"],
+    thumbnail: "/placeholder.svg?height=200&width=300",
+  },
+];
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+export default function Dashboard() {
+  const [isLoggedIn, setIsLoggedIn] = useState(!!mockUser);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedMap, setSelectedMap] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState<"recent" | "name" | "size">("recent");
 
-    if (!prompt.trim()) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const systemPrompt = getSystemPrompt(complexityLevel);
-      const response = await puter.ai.chat(
-        [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Create a concept map for: ${prompt}` },
-        ],
-        { model: "x-ai/grok-3-beta" }
-      );
-
-      const content = response?.message?.content;
-      if (!content) {
-        throw new Error("No response content from model.");
+  const filteredMaps = mockUserMaps
+    .filter(
+      (map) =>
+        map.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        map.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        map.tags.some((tag) =>
+          tag.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return a.title.localeCompare(b.title);
+        case "size":
+          return b.nodeCount - a.nodeCount;
+        case "recent":
+        default:
+          return (
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
       }
+    });
 
-      const parsed = JSON.parse(content);
-
-      setMapData(parsed);
-      setShowExample(false);
-    } catch (err) {
-      console.error("Error during Puter response handling:", err);
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
-    } finally {
-      setIsLoading(false);
-    }
+  if (selectedMap) {
+    return (
+      <div className="h-screen">
+        <div className="bg-white/80 backdrop-blur-md border-b border-surface/50 px-4 py-4">
+          <div className="container mx-auto flex justify-between items-center">
+            <div>
+              <h2 className="font-heading text-2xl font-semibold text-textPrimary">
+                {selectedMap.title}
+              </h2>
+              <p className="text-textSecondary">{selectedMap.description}</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedMap(null)}
+              className="border-2 hover:bg-surface/50"
+            >
+              Back to Dashboard
+            </Button>
+          </div>
+        </div>
+        <ConceptMap data={selectedMap} />
+      </div>
+    );
   }
-
-  const loadExample = () => {
-    setShowExample(true);
-    setMapData(null);
-  };
-
-  const displayData = showExample ? sampleExistentialismMap : mapData;
-
-  const examplePrompts = [
-    "World War II and its global impact",
-    "The Renaissance period in Europe",
-    "Climate change and environmental science",
-    "Artificial Intelligence and Machine Learning",
-    "The Roman Empire",
-    "Quantum Physics fundamentals",
-    "The Industrial Revolution",
-    "Ancient Greek Philosophy",
-    "DNA and Genetic Engineering",
-    "The Space Race and Moon Landing",
-    "Blockchain and Cryptocurrency",
-    "Evolution and Natural Selection",
-    "The French Revolution",
-    "Renewable Energy Technologies",
-    "Ancient Egyptian Civilization",
-  ];
 
   return (
     <>
       <Script src="https://js.puter.com/v2" />
       <main className="min-h-screen bg-gradient-to-br from-background via-primary-50/30 to-accent-50/20">
-        {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-surface/50">
+        <header className="bg-white/80 backdrop-blur-md border-b border-surface/50 sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
@@ -110,258 +141,335 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-              <nav className="flex gap-3">
-                <Button
-                  variant="ghost"
-                  className="text-textSecondary hover:text-textPrimary"
-                >
-                  Dashboard
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="text-textSecondary hover:text-textPrimary"
-                >
-                  My Maps
-                </Button>
-                <Button className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg">
-                  Sign In
-                </Button>
+              <nav className="flex items-center gap-3">
+                <Link href="/explore">
+                  <Button
+                    variant="ghost"
+                    className="text-textSecondary hover:text-textPrimary"
+                  >
+                    <Globe className="h-4 w-4 mr-2" />
+                    Explore Public Maps
+                  </Button>
+                </Link>
+                {isLoggedIn ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      className="text-textSecondary hover:text-textPrimary"
+                    >
+                      Settings
+                    </Button>
+                    <Button
+                      onClick={() => setShowCreateModal(true)}
+                      className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Map
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="ghost"
+                      className="text-textSecondary hover:text-textPrimary"
+                    >
+                      Sign In
+                    </Button>
+                    <Button className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg">
+                      Get Started
+                    </Button>
+                  </>
+                )}
               </nav>
             </div>
           </div>
         </header>
 
-        {!displayData ? (
-          /* Landing/Create Section */
-          <div className="container mx-auto px-4 py-16">
-            <div className="max-w-3xl mx-auto text-center mb-12 animate-fade-in">
-              <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-                <Zap className="h-4 w-4" />
-                Powered by Advanced AI
-              </div>
-              <h2 className="font-heading text-5xl font-bold text-textPrimary mb-6 leading-tight">
-                Transform Knowledge into
-                <span className="bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent block">
-                  Interactive Maps
-                </span>
+        {isLoggedIn ? (
+          <div className="container mx-auto px-4 py-8">
+            <div className="mb-8">
+              <h2 className="font-heading text-3xl font-bold text-textPrimary mb-2">
+                Welcome back! 👋
               </h2>
-              <p className="text-xl text-textSecondary mb-8 leading-relaxed">
-                Explore any topic through AI-powered visual knowledge maps. From
-                historical events to scientific breakthroughs, discover
-                connections and insights like never before.
+              <p className="text-textSecondary text-lg">
+                You have {mockUserMaps.length} concept maps. Ready to explore or
+                create something new?
               </p>
             </div>
 
-            <form
-              onSubmit={handleSubmit}
-              className="max-w-2xl mx-auto animate-slide-up"
-            >
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-elevated border border-surface/50">
-                <div className="mb-6">
-                  <label
-                    htmlFor="prompt"
-                    className="block text-sm font-semibold text-textPrimary mb-3"
-                  >
-                    What would you like to explore?
-                  </label>
-                  <Textarea
-                    id="prompt"
-                    placeholder="Enter any topic: World War II, Climate Change, Artificial Intelligence, Ancient Rome..."
-                    className="w-full p-4 border-2 border-surface focus:border-primary-300 rounded-xl text-base bg-white/50 backdrop-blur-sm transition-all duration-200"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-
-                {/* Example prompts */}
-                <div className="mb-6">
-                  <div className="text-sm font-medium text-textSecondary mb-3">
-                    Popular topics:
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-card border border-surface/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-textSecondary text-sm">Total Maps</p>
+                    <p className="text-2xl font-bold text-textPrimary">
+                      {mockUserMaps.length}
+                    </p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {examplePrompts.slice(0, 6).map((example, index) => (
-                      <button
-                        type="button"
-                        key={index}
-                        onClick={() => setPrompt(example)}
-                        className="px-4 py-2 text-sm bg-gradient-to-r from-surface to-surface/80 hover:from-primary-50 hover:to-primary-100 border border-surface hover:border-primary-200 rounded-full text-textSecondary hover:text-primary-700 transition-all duration-200"
-                      >
-                        {example}
-                      </button>
-                    ))}
+                  <div className="p-3 bg-primary-100 rounded-lg">
+                    <Brain className="h-6 w-6 text-primary-600" />
                   </div>
                 </div>
-
-                <div className="mb-8">
-                  <div className="text-sm font-semibold text-textPrimary mb-3">
-                    Map Detail Level
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-card border border-surface/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-textSecondary text-sm">Public Maps</p>
+                    <p className="text-2xl font-bold text-textPrimary">
+                      {mockUserMaps.filter((m) => m.isPublic).length}
+                    </p>
                   </div>
-                  <RadioGroup
-                    defaultValue="moderate"
-                    value={complexityLevel}
-                    onValueChange={setComplexityLevel}
-                    className="flex space-x-6"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="minimal"
-                        id="minimal"
-                        className="border-2"
-                      />
-                      <Label
-                        htmlFor="minimal"
-                        className="cursor-pointer font-medium"
-                      >
-                        Essential
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="moderate"
-                        id="moderate"
-                        className="border-2"
-                      />
-                      <Label
-                        htmlFor="moderate"
-                        className="cursor-pointer font-medium"
-                      >
-                        Balanced
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="thorough"
-                        id="thorough"
-                        className="border-2"
-                      />
-                      <Label
-                        htmlFor="thorough"
-                        className="cursor-pointer font-medium"
-                      >
-                        Comprehensive
-                      </Label>
-                    </div>
-                  </RadioGroup>
-
-                  <div className="text-xs text-textSecondary mt-2">
-                    {complexityLevel === "minimal" &&
-                      "Focus on the most important elements and core relationships."}
-                    {complexityLevel === "moderate" &&
-                      "Balanced coverage with key elements and meaningful connections."}
-                    {complexityLevel === "thorough" &&
-                      "Detailed exploration with comprehensive coverage and nuanced relationships."}
+                  <div className="p-3 bg-success-100 rounded-lg">
+                    <Globe className="h-6 w-6 text-success-600" />
                   </div>
                 </div>
-
-                <div className="flex gap-4">
-                  <Button
-                    type="submit"
-                    disabled={isLoading || !prompt.trim()}
-                    className="flex-1 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 h-14 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                        Creating Your Map...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-3 h-5 w-5" />
-                        Generate Knowledge Map
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={loadExample}
-                    className="h-14 px-8 border-2 hover:bg-surface/50 transition-all duration-200 bg-transparent"
-                  >
-                    View Example
-                  </Button>
-                </div>
-
-                {error && (
-                  <div className="mt-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl animate-slide-up">
-                    <p className="text-red-700 text-sm font-medium">{error}</p>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-card border border-surface/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-textSecondary text-sm">Total Nodes</p>
+                    <p className="text-2xl font-bold text-textPrimary">
+                      {mockUserMaps.reduce(
+                        (sum, map) => sum + map.nodeCount,
+                        0
+                      )}
+                    </p>
                   </div>
-                )}
+                  <div className="p-3 bg-accent-100 rounded-lg">
+                    <TrendingUp className="h-6 w-6 text-accent-600" />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-card border border-surface/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-textSecondary text-sm">This Month</p>
+                    <p className="text-2xl font-bold text-textPrimary">2</p>
+                  </div>
+                  <div className="p-3 bg-info-100 rounded-lg">
+                    <Clock className="h-6 w-6 text-info-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-card border border-surface/50 p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h3 className="font-heading text-xl font-semibold text-textPrimary">
+                  Your Concept Maps
+                </h3>
+
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-textSecondary" />
+                    <input
+                      type="text"
+                      placeholder="Search maps..."
+                      className="pl-10 pr-4 py-2 border border-surface rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white/50"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="px-3 py-2 border border-surface rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white/50"
+                  >
+                    <option value="recent">Recent</option>
+                    <option value="name">Name</option>
+                    <option value="size">Size</option>
+                  </select>
+
+                  <div className="flex border border-surface rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={`p-2 ${
+                        viewMode === "grid"
+                          ? "bg-primary-100 text-primary-600"
+                          : "bg-white/50 text-textSecondary"
+                      }`}
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`p-2 ${
+                        viewMode === "list"
+                          ? "bg-primary-100 text-primary-600"
+                          : "bg-white/50 text-textSecondary"
+                      }`}
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Features */}
+              {filteredMaps.length > 0 ? (
+                <div
+                  className={
+                    viewMode === "grid"
+                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                      : "space-y-4"
+                  }
+                >
+                  {filteredMaps.map((map) => (
+                    <MapCard
+                      key={map.id}
+                      map={map}
+                      viewMode={viewMode}
+                      onSelect={() => setSelectedMap(map)}
+                      showActions={true}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Brain className="h-16 w-16 text-textSecondary mx-auto mb-4 opacity-50" />
+                  <h4 className="font-medium text-textPrimary mb-2">
+                    No maps found
+                  </h4>
+                  <p className="text-textSecondary mb-4">
+                    {searchTerm
+                      ? "Try adjusting your search terms"
+                      : "Create your first concept map to get started"}
+                  </p>
+                  <Button
+                    onClick={() => setShowCreateModal(true)}
+                    className="bg-gradient-to-r from-primary-500 to-primary-600"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Map
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div className="container mx-auto px-4 py-16">
+              <div className="max-w-4xl mx-auto text-center mb-16">
+                <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                  <Sparkles className="h-4 w-4" />
+                  Transform Knowledge into Visual Maps
+                </div>
+                <h2 className="font-heading text-5xl font-bold text-textPrimary mb-6 leading-tight">
+                  Discover Connections in
+                  <span className="bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent block">
+                    Any Knowledge Domain
+                  </span>
+                </h2>
+                <p className="text-xl text-textSecondary mb-8 leading-relaxed max-w-3xl mx-auto">
+                  Create interactive concept maps powered by AI. Explore
+                  relationships between ideas, people, events, and concepts
+                  across any field of knowledge.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    onClick={() => setIsLoggedIn(true)}
+                    className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 h-14 text-lg font-semibold shadow-lg px-8"
+                  >
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Start Creating Maps
+                  </Button>
+                  <Link href="/explore">
+                    <Button
+                      variant="outline"
+                      className="h-14 px-8 border-2 hover:bg-surface/50 text-lg bg-transparent"
+                    >
+                      <Globe className="mr-2 h-5 w-5" />
+                      Explore Public Maps
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-elevated border border-surface/50 p-8">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="font-heading text-2xl font-semibold text-textPrimary mb-2">
+                      Featured Knowledge Maps
+                    </h3>
+                    <p className="text-textSecondary">
+                      Discover what others are exploring
+                    </p>
+                  </div>
+                  <Link href="/explore">
+                    <Button
+                      variant="ghost"
+                      className="text-primary-600 hover:text-primary-700"
+                    >
+                      View All <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {mockUserMaps
+                    .filter((map) => map.isPublic)
+                    .map((map) => (
+                      <MapCard
+                        key={map.id}
+                        map={map}
+                        viewMode="grid"
+                        onSelect={() => setSelectedMap(map)}
+                        showActions={false}
+                      />
+                    ))}
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-3 gap-8 mt-16">
                 <div className="text-center group">
                   <div className="bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200">
-                    <Globe className="h-8 w-8 text-primary-600" />
+                    <Brain className="h-8 w-8 text-primary-600" />
                   </div>
                   <h3 className="font-heading text-xl font-semibold text-textPrimary mb-3">
-                    Universal Knowledge
+                    AI-Powered Analysis
                   </h3>
                   <p className="text-textSecondary leading-relaxed">
-                    Explore any domain - from ancient history to cutting-edge
-                    science, literature to technology
+                    Advanced AI identifies key concepts, relationships, and
+                    structures in any knowledge domain
                   </p>
                 </div>
                 <div className="text-center group">
                   <div className="bg-gradient-to-br from-accent-100 to-accent-200 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200">
-                    <Target className="h-8 w-8 text-accent-600" />
+                    <Users className="h-8 w-8 text-accent-600" />
                   </div>
                   <h3 className="font-heading text-xl font-semibold text-textPrimary mb-3">
-                    Smart Connections
+                    Collaborative Learning
                   </h3>
                   <p className="text-textSecondary leading-relaxed">
-                    AI discovers hidden relationships and patterns across
-                    complex knowledge domains
+                    Share your maps publicly, explore others' work, and build
+                    knowledge together
                   </p>
                 </div>
                 <div className="text-center group">
                   <div className="bg-gradient-to-br from-success-100 to-success-200 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200">
-                    <Layers className="h-8 w-8 text-success-600" />
+                    <Star className="h-8 w-8 text-success-600" />
                   </div>
                   <h3 className="font-heading text-xl font-semibold text-textPrimary mb-3">
-                    Adaptive Detail
+                    Interactive Exploration
                   </h3>
                   <p className="text-textSecondary leading-relaxed">
-                    Control complexity from simple overviews to comprehensive
-                    deep-dive explorations
+                    Navigate complex topics with interactive visualizations and
+                    detailed insights
                   </p>
                 </div>
-              </div>
-            </form>
-          </div>
-        ) : (
-          /* Map View Section */
-          <div className="h-[calc(100vh-80px)]">
-            <div className="bg-white/80 backdrop-blur-md border-b border-surface/50 px-4 py-4">
-              <div className="container mx-auto flex justify-between items-center">
-                <div>
-                  <h2 className="font-heading text-2xl font-semibold text-textPrimary">
-                    {showExample ? "Existentialism" : prompt}
-                  </h2>
-                  <p className="text-textSecondary">
-                    {displayData.nodes?.length || 0} elements •{" "}
-                    {displayData.edges?.length || 0} relationships
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setMapData(null);
-                    setShowExample(false);
-                    setPrompt("");
-                  }}
-                  className="border-2 hover:bg-surface/50"
-                >
-                  Create New Map
-                </Button>
               </div>
             </div>
-            <ConceptMap
-              data={displayData}
-              initialComplexity={complexityLevel}
-            />
           </div>
+        )}
+
+        {showCreateModal && (
+          <CreateMapModal
+            onClose={() => setShowCreateModal(false)}
+            onMapCreated={(mapData) => {
+              setSelectedMap(mapData);
+              setShowCreateModal(false);
+            }}
+          />
         )}
       </main>
     </>
