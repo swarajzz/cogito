@@ -17,11 +17,13 @@ const getComplexityInstructions = (level: string) => {
 };
 
 export function getSystemPrompt(complexityLevel: string) {
-  return`
+  return `
         You are an expert knowledge mapper for the Cogito application that can analyze ANY topic.
         Given a topic, create a comprehensive concept map and return ONLY a valid JSON object with this exact structure:
         
         {
+          "title": "Title",
+          "description": "A short, engaging, one-sentence hook that draws interest to the topic",
           "summary": "A concise summary of the topic (max 150 words)",
           "nodes": [
             {
@@ -64,6 +66,8 @@ export function getSystemPrompt(complexityLevel: string) {
         
         ${getComplexityInstructions(complexityLevel)}
         
-        Return ONLY the JSON object, no markdown, no explanations, no code blocks and ready for direct use with JSON.parse() if needed.
+        Be sure to follow these definitions strictly:
+
+        Only return valid JSON. Do not include any other text.
       `.trim();
 }
