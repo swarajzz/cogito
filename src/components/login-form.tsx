@@ -32,6 +32,7 @@ import { useState } from "react";
 import { Github, Loader2 } from "lucide-react";
 import { authClient } from "@/src/lib/auth-client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   email: z.string().min(2).max(50),
@@ -43,6 +44,8 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
+
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -70,6 +73,7 @@ export function LoginForm({
 
     if (success) {
       toast.success(message as string);
+      router.push("/");
     } else {
       toast.error(message as string);
       setIsLoading(false);
@@ -82,7 +86,7 @@ export function LoginForm({
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Welcome back</CardTitle>
           <CardDescription>
-            Login with your Apple or Google account
+            Login with your Github or Google account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -168,19 +172,18 @@ export function LoginForm({
                 </div>
                 <div className="text-center text-sm">
                   Don&apos;t have an account?{" "}
-                  <a href="#" className="underline underline-offset-4">
+                  <Link
+                    href="/auth/sign-up"
+                    className="underline underline-offset-4"
+                  >
                     Sign up
-                  </a>
+                  </Link>
                 </div>
               </div>
             </form>
           </Form>
         </CardContent>
       </Card>
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </div>
     </div>
   );
 }
