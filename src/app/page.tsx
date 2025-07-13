@@ -129,7 +129,7 @@ export default function Dashboard() {
           <div className="container mx-auto px-4 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-glow">
+              <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-glow">
                   <Brain className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -169,12 +169,14 @@ export default function Dashboard() {
                   </>
                 ) : (
                   <>
-                    <Button
-                      variant="ghost"
-                      className="text-textSecondary hover:text-textPrimary"
-                    >
-                      Sign In
-                    </Button>
+                    <Link href="/auth/sign-in">
+                      <Button
+                        variant="ghost"
+                        className="text-textSecondary hover:text-textPrimary"
+                      >
+                        Sign In
+                      </Button>
+                    </Link>
                     <Button className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg">
                       Get Started
                     </Button>
