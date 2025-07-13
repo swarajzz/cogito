@@ -37,8 +37,6 @@ export function MapCard({ map, viewMode, onSelect, showActions = false, showStat
     })
   }
 
-  console.log(map)
-
   if (viewMode === "list") {
     return (
       <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-card border border-surface/50 p-6 hover:shadow-elevated transition-all duration-200">

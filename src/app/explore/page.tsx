@@ -111,8 +111,6 @@ export default function ExplorePage() {
   const [sortBy, setSortBy] = useState<"popular" | "recent" | "trending">("popular")
   const [showFilters, setShowFilters] = useState(false)
 
-  console.log(setSelectedMap)
-
   const filteredMaps = mockPublicMaps
     .filter((map) => {
       const matchesSearch =
