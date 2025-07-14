@@ -162,7 +162,7 @@ export default function ExplorePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-primary-50/30 to-accent-50/20">
-
+{/* 
       <header className="bg-white/80 backdrop-blur-md border-b border-surface/50 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -197,7 +197,7 @@ export default function ExplorePage() {
             </nav>
           </div>
         </div>
-      </header>
+      </header> */}
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
