@@ -116,7 +116,7 @@ export function MapCard({ map, viewMode, onSelect, showActions = false, showStat
         </div>
 
         <div className="flex flex-wrap gap-1 mt-4">
-          {map.tags.map((tag) => (
+          {map.tags?.map((tag) => (
             <span key={tag} className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded-full">
               {tag}
             </span>
@@ -180,12 +180,12 @@ export function MapCard({ map, viewMode, onSelect, showActions = false, showStat
           )}
 
           <div className="flex flex-wrap gap-1">
-            {map.tags.slice(0, 3).map((tag) => (
+            {map.tags?.slice(0, 3).map((tag) => (
               <span key={tag} className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded-full">
                 {tag}
               </span>
             ))}
-            {map.tags.length > 3 && (
+            {map.tags?.length > 3 && (
               <span className="px-2 py-1 bg-surface text-textSecondary text-xs rounded-full">
                 +{map.tags.length - 3}
               </span>

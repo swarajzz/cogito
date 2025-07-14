@@ -1,16 +1,34 @@
 "use client";
 import { CreateMapModal } from "@/src/components/CreateMapModal";
+import Loader from "@/src/components/Loader";
 import { Button } from "@/src/components/ui/button";
 import { authClient } from "@/src/lib/auth-client";
 import { Brain, Globe, Plus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function layout({ children }: { children: React.ReactNode }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { data: session, error } = authClient.useSession();
+  const router = useRouter();
+
+  const { data: session, error, isPending } = authClient.useSession();
 
   const isLoggedIn = !!session;
+
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/auth/sign-in");
+        },
+      },
+    });
+  };
+
+  if (isPending) {
+    return <Loader />;
+  }
 
   return (
     <>
@@ -42,18 +60,25 @@ export default function layout({ children }: { children: React.ReactNode }) {
               </Link>
               {isLoggedIn ? (
                 <>
-                  {/* <Button
-                    variant="ghost"
-                    className="text-textSecondary hover:text-textPrimary"
-                  >
-                    Settings
-                  </Button> */}
+                  <Link href="/dashboard">
+                    <Button
+                      variant="ghost"
+                      className="text-textSecondary hover:text-textPrimary"
+                    >
+                      Dashboard
+                    </Button>
+                  </Link>
+
                   <Button
                     onClick={() => setShowCreateModal(true)}
                     className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Create Map
+                  </Button>
+
+                  <Button variant="destructive" onClick={handleLogout}>
+                    Sign Out
                   </Button>
                 </>
               ) : (
@@ -66,9 +91,11 @@ export default function layout({ children }: { children: React.ReactNode }) {
                       Sign In
                     </Button>
                   </Link>
-                  <Button className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg">
-                    Get Started
-                  </Button>
+                  <Link href="/auth/sign-in">
+                    <Button className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg">
+                      Get Started
+                    </Button>
+                  </Link>
                 </>
               )}
             </nav>
