@@ -1,8 +1,8 @@
 const nextConfig = {
   experimental: {
-    optimizePackageImports: ['d3', 'lucide-react'],
+    optimizePackageImports: ["d3", "lucide-react"],
   },
-  transpilePackages: ['d3'],
+  transpilePackages: ["d3"],
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -12,6 +12,18 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-}
+  async rewrites() {
+    return [
+      {
+        source: "/home",
+        destination: "/",
+      },
+      {
+        source: "/",
+        destination: "/home",
+      },
+    ];
+  },
+};
 
-export default nextConfig
+export default nextConfig;
