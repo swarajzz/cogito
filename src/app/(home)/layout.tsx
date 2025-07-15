@@ -5,12 +5,14 @@ import { Button } from "@/src/components/ui/button";
 import { authClient } from "@/src/lib/auth-client";
 import { Brain, Globe, Plus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function layout({ children }: { children: React.ReactNode }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  console.log(pathname.includes("dashboard"));
 
   const { data: session, error, isPending } = authClient.useSession();
 
@@ -20,15 +22,15 @@ export default function layout({ children }: { children: React.ReactNode }) {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/auth/sign-in");
+          router.push("/home");
         },
       },
     });
   };
 
-  if (isPending) {
-    return <Loader />;
-  }
+  // if (isPending) {
+  //   return <Loader />;
+  // }
 
   return (
     <>
@@ -39,35 +41,39 @@ export default function layout({ children }: { children: React.ReactNode }) {
               <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-glow">
                 <Brain className="h-6 w-6 text-white" />
               </div>
-              <div>
+              <Link href="/">
                 <h1 className="font-heading text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
                   Cogito
                 </h1>
                 <p className="text-xs text-textSecondary">
                   AI Knowledge Mapping
                 </p>
-              </div>
+              </Link>
             </div>
             <nav className="flex items-center gap-3">
-              <Link href="/explore">
-                <Button
-                  variant="ghost"
-                  className="text-textSecondary hover:text-textPrimary"
-                >
-                  <Globe className="h-4 w-4 mr-2" />
-                  Explore Public Maps
-                </Button>
-              </Link>
+              {!pathname.includes("explore") && (
+                <Link href="/explore">
+                  <Button
+                    variant="ghost"
+                    className="text-textSecondary hover:text-textPrimary"
+                  >
+                    <Globe className="h-4 w-4 mr-2" />
+                    Explore Public Maps
+                  </Button>
+                </Link>
+              )}
               {isLoggedIn ? (
                 <>
-                  <Link href="/dashboard">
-                    <Button
-                      variant="ghost"
-                      className="text-textSecondary hover:text-textPrimary"
-                    >
-                      Dashboard
-                    </Button>
-                  </Link>
+                  {!pathname.includes("dashboard") && (
+                    <Link href="/dashboard">
+                      <Button
+                        variant="ghost"
+                        className="text-textSecondary hover:text-textPrimary"
+                      >
+                        Dashboard
+                      </Button>
+                    </Link>
+                  )}
 
                   <Button
                     onClick={() => setShowCreateModal(true)}
@@ -91,7 +97,8 @@ export default function layout({ children }: { children: React.ReactNode }) {
                       Sign In
                     </Button>
                   </Link>
-                  <Link href="/auth/sign-in">
+
+                  <Link href="/dashboard">
                     <Button className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg">
                       Get Started
                     </Button>

@@ -23,7 +23,7 @@ const Hero = () => {
         knowledge.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Link href="/auth/sign-in">
+        <Link href="/dashboard">
           <Button className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 h-14 text-lg font-semibold shadow-lg px-8">
             <Sparkles className="mr-2 h-5 w-5" />
             Start Creating Maps
