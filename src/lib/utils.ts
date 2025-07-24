@@ -22,52 +22,55 @@ export function getSystemPrompt(complexityLevel: string) {
         Given a topic, create a comprehensive concept map and return ONLY a valid JSON object with this exact structure:
         
         {
-          "title": "Title",
+          "title": "Title of the concept map",
           "description": "A short, engaging, one-sentence hook that draws interest to the topic",
           "summary": "A concise summary of the topic (max 150 words)",
+          "node_count": "Number of nodes as a number",
+          "edge_count": "Number of edges as a number",
           "nodes": [
             {
-              "id": "unique_string_id",
-              "label": "Node Name",
+              "id": "unique_node_id_string",
+              "label": "Node label/title",
               "type": "concept|person|event|theory|work|movement|place|organization|technology|discovery|invention|method|principle|law|phenomenon|process|system|structure|component|resource|tool|technique|practice|tradition|culture|ideology|belief|value",
-              "description": "Brief description",
+              "description": "Short description of the node.",
               "importance": 1-10,
-              "discipline": "field of study",
-              "year": 1900,
-              "period": "time period",
-              "location": "geographic location",
+              "discipline": "Field of study (e.g., history, physics, biology, etc.)",
+              "year": "Year as a string, e.g. '509 BC', '476 AD', '2000', or '4th century AD'",
+              "period": "Named time period, e.g. 'Classical Antiquity'",
+              "location": "Geographic location (city, region, or country)",
               "resources": [
                 {
                   "title": "Resource title",
-                  "url": "optional url",
-                  "description": "resource description"
+                  "url": "URL string (optional)",
+                  "description": "Brief description of the resource"
                 }
               ]
             }
           ],
           "edges": [
             {
-              "id": "unique_edge_id",
+              "id": "unique_edge_id_string",
               "source": "source_node_id",
               "target": "target_node_id", 
-              "label": "relationship description",
+              "label": "Relationship label (e.g., 'influences', 'results in')",
               "type": "influences|critiques|builds_upon|contradicts|part_of|contains|precedes|follows|causes|results_in|similar_to|different_from|applies_to|used_by|created_by|discovered_by|invented_by|located_in|occurs_in|leads_to|prevents|enables|requires|supports|opposes|replaces|evolves_from|competes_with|collaborates_with|depends_on|implements|exemplifies|generalizes",
               "strength": 1-5
             }
           ],
           "disciplines": ["field1", "field2"],
           "timespan": {
-            "start": 1800,
-            "end": 2024
+            "start": "Start year as string (e.g., '509 BC')",
+            "end": "End year as string (e.g., '476 AD')"
           },
           "geography": ["location1", "location2"],
-          "keyThemes": ["theme1", "theme2"]
+          "keyThemes": ["Theme 1", "Theme 2", "etc."]
         }
         
         ${getComplexityInstructions(complexityLevel)}
         
         Be sure to follow these definitions strictly:
-
-        Only return valid JSON. Do not include any other text.
+        - Return only **valid JSON**, no markdown, no explanation.
+        - Use strings for all historical dates (e.g., '509 BC', '27 BC', '476 AD', '100').
+        - Ensure all fields match the structure exactly.
       `.trim();
 }
