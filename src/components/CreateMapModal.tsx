@@ -7,8 +7,11 @@ import { Button } from "@/src/components/ui/button";
 import { Textarea } from "@/src/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/src/components/ui/radio-group";
 import { Label } from "@/src/components/ui/label";
-import { X, Loader2, Sparkles } from "lucide-react";
+import { X, Loader2, Sparkles, Router } from "lucide-react";
 import { getSystemPrompt } from "@/src/lib/utils";
+import { createMap } from "@/src/server/db/actions";
+import { useRouter } from "next/navigation";
+import { useSession } from "@/src/lib/auth-client";
 
 interface CreateMapModalProps {
   onClose: () => void;
@@ -20,6 +23,9 @@ export function CreateMapModal({ onClose, onMapCreated }: CreateMapModalProps) {
   const [complexityLevel, setComplexityLevel] = useState("moderate");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const { data: session } = useSession();
 
   const examplePrompts = [
     "World War II and its global impact",
@@ -43,18 +49,20 @@ export function CreateMapModal({ onClose, onMapCreated }: CreateMapModalProps) {
         [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Create a concept map for: ${prompt}` },
-        ],
+        ]
         // { model: "x-ai/grok-3-beta" }
       );
 
       const content = response?.message?.content;
-    
+
       if (!content) {
         throw new Error("No response content from model.");
       }
 
-      const parsed = JSON.parse(content);
-      onMapCreated(parsed);
+      const parsedJson = JSON.parse(content);
+      const result = await createMap(parsedJson);
+
+      router.push(`/map/${result.id}`);
     } catch (err: any) {
       console.error("Error during Puter response handling:", err);
 

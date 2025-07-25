@@ -63,7 +63,8 @@ export function getSystemPrompt(complexityLevel: string) {
             "end": "End year as string (e.g., '476 AD')"
           },
           "geography": ["location1", "location2"],
-          "keyThemes": ["Theme 1", "Theme 2", "etc."]
+          "tags": ["tag1", "tag2", "etc."]
+          "keyThemes": ["Theme 1", "Theme 2", "etc."],
         }
         
         ${getComplexityInstructions(complexityLevel)}
