@@ -3,7 +3,7 @@
 import FeaturedList from "@/src/components/home/FeaturedList";
 import { FeaturedListSkeleton } from "@/src/components/home/FeaturedListSkeleton";
 import { Button } from "@/src/components/ui/button";
-import { maps } from "@/src/server/db/schema/maps";
+import { MapDbType } from "@/src/zod-schemas/map";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -53,7 +53,7 @@ const mockUserMaps = [
 const Featured = ({
   featuredMapsPromise,
 }: {
-  featuredMapsPromise: Promise<typeof maps.$inferSelect[]>;
+  featuredMapsPromise: Promise<MapDbType[]>;
 }) => {
   const router = useRouter();
 

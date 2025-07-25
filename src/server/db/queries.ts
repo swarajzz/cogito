@@ -1,12 +1,43 @@
-import { user as usersSchema } from "@/migrations/schema";
 import { db } from "@/src/server/db";
-import { maps as mapsSchema } from "@/src/server/db/schema/maps";
+import { maps_table as mapsSchema } from "@/src/server/db/schema/map-schema";
+import {
+  MapDbSchema,
+  MapDbType,
+  MapFullSchema,
+} from "@/src/zod-schemas/map";
 import { eq } from "drizzle-orm";
 
-export function getUserMap(mapId: string) {
-  return db.select().from(mapsSchema).where(eq(mapsSchema.userId, mapId));
+export async function getMapData(mapId: string): Promise<MapDbType | null> {
+  const result = await db
+    .select()
+    .from(mapsSchema)
+    .where(eq(mapsSchema.id, Number(mapId)));
+
+  const map = result[0];
+
+  if (!map) return null;
+
+  const parsed = MapFullSchema.safeParse(map.mapData);
+
+  if (!parsed.success) {
+    console.log(parsed.error.format());
+    return null;
+  }
+
+  return {
+    ...map,
+    mapData: parsed.data,
+  };
 }
 
-export async function getFeaturedMaps() {
-  return db.select().from(mapsSchema);
+export function getUserMap(userId: string) {
+  return db.select().from(mapsSchema).where(eq(mapsSchema.userId, userId));
+}
+
+export async function getFeaturedMaps(): Promise<MapDbType[]> {
+  const result = db.select().from(mapsSchema);
+
+  const parsedMapData = (await result).map((row) => MapDbSchema.parse(row));
+
+  return parsedMapData;
 }

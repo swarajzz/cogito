@@ -1,17 +1,18 @@
 import { MapCard } from "@/src/components/MapCard";
-import { maps } from "@/src/server/db/schema/maps";
+import { maps_table as mapsSchema } from "@/src/server/db/schema/map-schema";
+import { MapDbType } from "@/src/zod-schemas/map";
 import { useRouter } from "next/navigation";
 import React, { Suspense, use } from "react";
 
 const FeaturedList = ({
   featuredMapsPromise,
 }: {
-  featuredMapsPromise: Promise<(typeof maps.$inferSelect)[]>;
+  featuredMapsPromise: Promise<MapDbType[]>;
 }) => {
   const router = useRouter();
   const featuredMaps = use(featuredMapsPromise);
 
-  function handleMapSelect(map: typeof maps.$inferSelect) {
+  function handleMapSelect(map: typeof mapsSchema.$inferSelect) {
     router.push(`/map/${map.id}`);
   }
 
