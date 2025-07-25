@@ -2,7 +2,7 @@ import { pgTable as table } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 import * as t from "drizzle-orm/pg-core";
 
-export const maps = table("maps", {
+export const maps_table = table("maps", {
   id: t.integer().primaryKey().generatedByDefaultAsIdentity(),
 
   title: t.varchar({ length: 256 }).notNull(),
@@ -23,10 +23,12 @@ export const maps = table("maps", {
   mapData: t.jsonb("map_data"),
 
   userId: t
-    .integer("user_id")
+    .text("user_id")
     .references(() => user.id, { onDelete: "cascade" })
     .notNull(),
 
   createdAt: t.timestamp("created_at").notNull().defaultNow(),
   updatedAt: t.timestamp("updated_at").notNull().defaultNow(),
 });
+
+export type DB_MapType = typeof maps_table.$inferSelect;
