@@ -69,3 +69,6 @@ export const MapDbSchema = MapDbSelectSchema.extend({
 export type MapFullType = z.infer<typeof MapFullSchema>;
 export type MapCoreType = z.infer<typeof MapCoreSchema>;
 export type MapDbType = z.infer<typeof MapDbSchema>;
+
+
+export const MapDbSchemaArr = z.array(MapDbSchema);
