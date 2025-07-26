@@ -8,15 +8,15 @@ export const maps_table = table("maps", {
   title: t.varchar({ length: 256 }).notNull(),
   description: t.varchar({ length: 1024 }).notNull(),
 
-  nodeCount: t.integer("node_count").default(0),
-  edgeCount: t.integer("edge_count").default(0),
+  nodeCount: t.integer("node_count").default(0).notNull(),
+  edgeCount: t.integer("edge_count").default(0).notNull(),
 
-  isPublic: t.boolean("is_public").default(true),
+  isPublic: t.boolean("is_public").default(true).notNull(),
 
   author: t.varchar({ length: 256 }).notNull(),
 
-  likes: t.integer().default(0),
-  views: t.integer().default(0),
+  likes: t.integer().default(0).notNull(),
+  views: t.integer().default(0).notNull(),
 
   thumbnail: t.varchar({ length: 256 }),
 
