@@ -13,10 +13,8 @@ import React, { useState } from "react";
 type Session = typeof auth.$Infer.Session;
 
 const Header = ({
-  children,
   session,
 }: {
-  children: React.ReactNode;
   session: Session | null;
 }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -206,8 +204,6 @@ const Header = ({
           </div>
         </div>
       </header>
-
-      {children}
 
       {showCreateModal && (
         <CreateMapModal

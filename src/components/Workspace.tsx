@@ -3,6 +3,7 @@
 import { CreateMapModal } from "@/src/components/CreateMapModal";
 import { MapCard } from "@/src/components/MapCard";
 import { Button } from "@/src/components/ui/button";
+import { maps_table as mapsSchema } from "@/src/server/db/schema/map-schema";
 import { MapDbType } from "@/src/zod-schemas/map";
 import {
   Brain,
@@ -14,6 +15,7 @@ import {
   Search,
   TrendingUp,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 const Workspace = ({ userMaps }: { userMaps: MapDbType[] }) => {
@@ -22,6 +24,12 @@ const Workspace = ({ userMaps }: { userMaps: MapDbType[] }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<"recent" | "name" | "size">("recent");
+
+  const router = useRouter()
+  
+  function handleMapSelect(map: typeof mapsSchema.$inferSelect) {
+    router.push(`/map/${map.id}`);
+  }
 
   const filteredMaps = userMaps
     .filter(
@@ -177,7 +185,7 @@ const Workspace = ({ userMaps }: { userMaps: MapDbType[] }) => {
                 key={map.id}
                 map={map}
                 viewMode={viewMode}
-                onSelect={() => setSelectedMap(map)}
+                onSelect={() => handleMapSelect(map)}
                 showActions={true}
               />
             ))}

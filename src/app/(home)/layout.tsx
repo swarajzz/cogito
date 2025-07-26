@@ -15,7 +15,8 @@ export default async function layout({
   return (
     <>
       <Script src="https://js.puter.com/v2" />
-      <Header children={children} session={session} />
+      <Header session={session} />
+      {children}
     </>
   );
 }
