@@ -26,7 +26,6 @@ const Header = ({
 
   const router = useRouter();
   const pathname = usePathname();
-  console.log(pathname.includes("dashboard"));
 
   const handleLogout = async () => {
     await authClient.signOut({
@@ -214,8 +213,8 @@ const Header = ({
         <CreateMapModal
           onClose={() => setShowCreateModal(false)}
           onMapCreated={(mapData) => {
-            // setSelectedMap(mapData);
             setShowCreateModal(false);
+            // router.push("/map/")
           }}
         />
       )}

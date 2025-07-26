@@ -162,42 +162,6 @@ export default function ExplorePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-primary-50/30 to-accent-50/20">
-{/* 
-      <header className="bg-white/80 backdrop-blur-md border-b border-surface/50 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <Link href="/">
-                <div className="flex items-center gap-3 cursor-pointer">
-                  <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-glow">
-                    <Brain className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="font-heading text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
-                      Cogito
-                    </h1>
-                    <p className="text-xs text-textSecondary">AI Knowledge Mapping</p>
-                  </div>
-                </div>
-              </Link>
-            </div>
-            <nav className="flex items-center gap-3">
-              <Link href="/">
-                <Button variant="ghost" className="text-textSecondary hover:text-textPrimary">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
-              <Button variant="ghost" className="text-textSecondary hover:text-textPrimary">
-                Sign In
-              </Button>
-              <Button className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg">
-                Get Started
-              </Button>
-            </nav>
-          </div>
-        </div>
-      </header> */}
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">

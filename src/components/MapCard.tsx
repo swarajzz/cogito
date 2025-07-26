@@ -1,41 +1,42 @@
-"use client"
+"use client";
 
-import { Button } from "@/src/components/ui/button"
-import { MoreHorizontal, Eye, Heart, Share2, Edit, Trash2, Globe, Lock, Calendar, User, Network } from "lucide-react"
-import { useState } from "react"
+import { Button } from "@/src/components/ui/button";
+import { MapDbType } from "@/src/zod-schemas/map";
+import {
+  MoreHorizontal,
+  Eye,
+  Heart,
+  Share2,
+  Edit,
+  Trash2,
+  Globe,
+  Lock,
+  Calendar,
+  User,
+  Network,
+} from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 interface MapCardProps {
-  map: {
-    id: string
-    title: string
-    description: string
-    nodeCount: number
-    edgeCount: number
-    createdAt: string
-    updatedAt: string
-    isPublic: boolean
-    tags: string[]
-    author?: string
-    likes?: number
-    views?: number
-    thumbnail?: string
-  }
-  viewMode: "grid" | "list"
-  onSelect: () => void
-  showActions?: boolean
-  showStats?: boolean
+  map: MapDbType;
+  viewMode: "grid" | "list";
+  onSelect: () => void;
+  showActions?: boolean;
+  showStats?: boolean;
 }
 
-export function MapCard({ map, viewMode, onSelect, showActions = false, showStats = false }: MapCardProps) {
-  const [showMenu, setShowMenu] = useState(false)
+export function MapCard({
+  map,
+  viewMode,
+  onSelect,
+  showActions = false,
+  showStats = false,
+}: MapCardProps) {
+  const [showMenu, setShowMenu] = useState(false);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-  }
+  const pathName = usePathname();
+  const mapData = pathName === "/" ? map.mapData : map;
 
   if (viewMode === "list") {
     return (
@@ -57,7 +58,9 @@ export function MapCard({ map, viewMode, onSelect, showActions = false, showStat
                     <Lock className="h-4 w-4 text-textSecondary" />
                   )}
                 </div>
-                <p className="text-textSecondary text-sm mb-3 line-clamp-2">{map.description}</p>
+                <p className="text-textSecondary text-sm mb-3 line-clamp-2">
+                  {map.description}
+                </p>
                 <div className="flex items-center gap-4 text-xs text-textSecondary">
                   <span className="flex items-center gap-1">
                     <Network className="h-3 w-3" />
@@ -71,7 +74,7 @@ export function MapCard({ map, viewMode, onSelect, showActions = false, showStat
                   )}
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {formatDate(map.updatedAt)}
+                    {new Date(map.updatedAt).toLocaleDateString()}
                   </span>
                   {showStats && (
                     <>
@@ -92,7 +95,12 @@ export function MapCard({ map, viewMode, onSelect, showActions = false, showStat
 
           {showActions && (
             <div className="relative">
-              <Button variant="ghost" size="sm" onClick={() => setShowMenu(!showMenu)} className="h-8 w-8 p-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMenu(!showMenu)}
+                className="h-8 w-8 p-0"
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
               {showMenu && (
@@ -116,14 +124,17 @@ export function MapCard({ map, viewMode, onSelect, showActions = false, showStat
         </div>
 
         <div className="flex flex-wrap gap-1 mt-4">
-          {map.tags?.map((tag) => (
-            <span key={tag} className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded-full">
+          {mapData.tags?.map((tag) => (
+            <span
+              key={tag}
+              className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded-full"
+            >
               {tag}
             </span>
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -150,13 +161,15 @@ export function MapCard({ map, viewMode, onSelect, showActions = false, showStat
           <h3 className="font-heading text-lg font-semibold text-textPrimary mb-2 group-hover:text-primary-600 transition-colors line-clamp-1">
             {map.title}
           </h3>
-          <p className="text-textSecondary text-sm mb-4 line-clamp-2">{map.description}</p>
+          <p className="text-textSecondary text-sm mb-4 line-clamp-2">
+            {map.description}
+          </p>
 
           <div className="flex items-center justify-between text-xs text-textSecondary mb-4">
             <span>
               {map.nodeCount} nodes • {map.edgeCount} connections
             </span>
-            <span>{formatDate(map.updatedAt)}</span>
+            <span>{new Date(map.updatedAt).toLocaleDateString()}</span>
           </div>
 
           {map.author && (
@@ -180,14 +193,17 @@ export function MapCard({ map, viewMode, onSelect, showActions = false, showStat
           )}
 
           <div className="flex flex-wrap gap-1">
-            {map.tags?.slice(0, 3).map((tag) => (
-              <span key={tag} className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded-full">
+            {mapData.tags?.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded-full"
+              >
                 {tag}
               </span>
             ))}
-            {map.tags?.length > 3 && (
+            {mapData.tags?.length > 3 && (
               <span className="px-2 py-1 bg-surface text-textSecondary text-xs rounded-full">
-                +{map.tags.length - 3}
+                +{mapData.tags.length - 3}
               </span>
             )}
           </div>
@@ -206,11 +222,15 @@ export function MapCard({ map, viewMode, onSelect, showActions = false, showStat
               Share
             </Button>
           </div>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-600">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+          >
             <Trash2 className="h-3 w-3" />
           </Button>
         </div>
       )}
     </div>
-  )
+  );
 }
