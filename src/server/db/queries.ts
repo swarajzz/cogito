@@ -1,8 +1,14 @@
 import { auth } from "@/src/lib/auth";
 import { db } from "@/src/server/db";
-import { maps_table as mapsSchema } from "@/src/server/db/schema/map-schema";
+import {
+  maps_table as mapsSchema,
+} from "@/src/server/db/schema/map-schema";
 import { tags_table } from "@/src/server/db/schema/tags-schema";
-import { MapCoreSchema, MapDbSchemaArr, MapDbType } from "@/src/zod-schemas/map";
+import {
+  MapCoreSchema,
+  MapDbSchemaArr,
+  MapDbType,
+} from "@/src/zod-schemas/map";
 import { eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 
@@ -38,9 +44,28 @@ export async function getUserMaps() {
     throw new Error("User not found");
   }
 
-  const userMaps = await db.select().from(mapsSchema).where(eq(mapsSchema.userId, session.user.id));
+  const userMaps = await db
+    .select()
+    .from(mapsSchema)
+    .where(eq(mapsSchema.userId, session.user.id));
 
   const result = MapDbSchemaArr.safeParse(userMaps);
+
+  if (!result.success) {
+    console.error("❌ Invalid map data:", result.error);
+    return [];
+  }
+
+  return result.data;
+}
+
+export async function getExploreMaps(): Promise<MapDbType[]> {
+  const exploreMaps = await db
+    .select()
+    .from(mapsSchema)
+    .where(eq(mapsSchema.isPublic, true));
+
+  const result = MapDbSchemaArr.safeParse(exploreMaps);
 
   if (!result.success) {
     console.error("❌ Invalid map data:", result.error);

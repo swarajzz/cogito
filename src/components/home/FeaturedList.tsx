@@ -12,10 +12,6 @@ const FeaturedList = ({
   const router = useRouter();
   const featuredMaps = use(featuredMapsPromise);
 
-  function handleMapSelect(map: typeof mapsSchema.$inferSelect) {
-    router.push(`/map/${map.id}`);
-  }
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {featuredMaps
@@ -25,7 +21,6 @@ const FeaturedList = ({
             key={map.id}
             map={map}
             viewMode="grid"
-            onSelect={() => handleMapSelect(map)}
             showActions={false}
           />
         ))}

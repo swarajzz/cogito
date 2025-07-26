@@ -26,10 +26,6 @@ const Workspace = ({ userMaps }: { userMaps: MapDbType[] }) => {
   const [sortBy, setSortBy] = useState<"recent" | "name" | "size">("recent");
 
   const router = useRouter()
-  
-  function handleMapSelect(map: typeof mapsSchema.$inferSelect) {
-    router.push(`/map/${map.id}`);
-  }
 
   const filteredMaps = userMaps
     .filter(
@@ -185,7 +181,6 @@ const Workspace = ({ userMaps }: { userMaps: MapDbType[] }) => {
                 key={map.id}
                 map={map}
                 viewMode={viewMode}
-                onSelect={() => handleMapSelect(map)}
                 showActions={true}
               />
             ))}
