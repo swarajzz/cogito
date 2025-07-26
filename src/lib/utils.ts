@@ -62,9 +62,13 @@ export function getSystemPrompt(complexityLevel: string) {
             "start": "Start year as string (e.g., '509 BC')",
             "end": "End year as string (e.g., '476 AD')"
           },
-          "geography": ["location1", "location2"],
-          "tags": ["tag1", "tag2", "etc."]
-          "keyThemes": ["Theme 1", "Theme 2", "etc."],
+          "geography": ["Relevant geographic locations such as countries, cities, or regions"],
+          "tags": [
+    "Short, general-purpose keywords for searching, filtering, or discovery, e.g., '19th century', 'feminism', 'Asia'"
+  ],
+          "keyThemes": [
+    "Core ideas, philosophical topics, or concepts explored deeply in this map, e.g., 'liberty', 'empiricism', 'industrialization'"
+  ]
         }
         
         ${getComplexityInstructions(complexityLevel)}

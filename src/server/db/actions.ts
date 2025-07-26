@@ -2,7 +2,12 @@
 
 import { auth } from "@/src/lib/auth";
 import { db } from "@/src/server/db";
+import { getTagRecords } from "@/src/server/db/queries";
 import { maps_table } from "@/src/server/db/schema/map-schema";
+import {
+  mapOnTags,
+  tags_table,
+} from "@/src/server/db/schema/tags-schema";
 import { MapCoreSchema, MapFullType } from "@/src/zod-schemas/map";
 import { headers } from "next/headers";
 
@@ -88,5 +93,23 @@ export const createMap = async (data: MapFullType) => {
     })
     .returning({ id: maps_table.id });
 
-  return { success: true, id: createdMap[0]?.id };
+  const mapId = createdMap[0]?.id;
+
+  if (mapId && data?.tags?.length > 0) {
+    await db
+      .insert(tags_table)
+      .values(data.tags.map((tag) => ({ name: tag })))
+      .onConflictDoNothing();
+
+    const tagRecords = await getTagRecords(data.tags)
+
+    const relations = tagRecords.map((tag) => ({
+      mapId,
+      tagId: tag.id,
+    }));
+
+    await db.insert(mapOnTags).values(relations);
+  }
+
+  return { success: true, id: mapId };
 };

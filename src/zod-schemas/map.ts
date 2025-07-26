@@ -46,10 +46,11 @@ export const MapFullSchema = z.object({
     end: z.string(),
   }),
   geography: z.array(z.string()),
+  tags: z.array(z.string()),
   keyThemes: z.array(z.string()),
 });
 
-// Data storing in the DB 
+// Data storing in the DB
 export const MapCoreSchema = MapFullSchema.omit({
   title: true,
   description: true,

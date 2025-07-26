@@ -8,7 +8,7 @@ export const tags_table = table("tags", {
   createdAt: t.timestamp("created_at").defaultNow().notNull(),
 });
 
-export const mapTags = table(
+export const mapOnTags = table(
   "map_tags",
   {
     mapId: t

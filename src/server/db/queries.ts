@@ -1,11 +1,8 @@
 import { db } from "@/src/server/db";
 import { maps_table as mapsSchema } from "@/src/server/db/schema/map-schema";
-import {
-  MapCoreSchema,
-  MapDbSchema,
-  MapDbType,
-} from "@/src/zod-schemas/map";
-import { eq } from "drizzle-orm";
+import { tags_table } from "@/src/server/db/schema/tags-schema";
+import { MapCoreSchema, MapDbSchema, MapDbType } from "@/src/zod-schemas/map";
+import { eq, inArray } from "drizzle-orm";
 import z4, { z } from "zod/v4";
 
 export async function getMapData(mapId: string): Promise<MapDbType | null> {
@@ -48,4 +45,11 @@ export async function getFeaturedMaps(): Promise<MapDbType[]> {
   }
 
   return result.data;
+}
+
+export async function getTagRecords(tags: string[]) {
+  return db
+    .select({ id: tags_table.id, name: tags_table.name })
+    .from(tags_table)
+    .where(inArray(tags_table.name, tags));
 }
