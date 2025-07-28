@@ -1,3 +1,5 @@
+import "server-only";
+
 import { auth } from "@/src/lib/auth";
 import { db } from "@/src/server/db";
 import { maps_table as mapsSchema } from "@/src/server/db/schema/map-schema";
@@ -10,94 +12,96 @@ import {
 import { desc, eq, inArray, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 
-export async function getMapData(mapId: string): Promise<MapDbType | null> {
-  await db
-    .update(mapsSchema)
-    .set({ views: sql`${mapsSchema.views} + 1` })
-    .where(eq(mapsSchema.id, Number(mapId)));
+export const QUERIES = {
+  getMapData: async function (mapId: string): Promise<MapDbType | null> {
+    await db
+      .update(mapsSchema)
+      .set({ views: sql`${mapsSchema.views} + 1` })
+      .where(eq(mapsSchema.id, Number(mapId)));
 
-  const result = await db
-    .select()
-    .from(mapsSchema)
-    .where(eq(mapsSchema.id, Number(mapId)));
+    const result = await db
+      .select()
+      .from(mapsSchema)
+      .where(eq(mapsSchema.id, Number(mapId)));
 
-  const map = result[0];
+    const map = result[0];
 
-  if (!map) return null;
+    if (!map) return null;
 
-  const parsed = MapCoreSchema.safeParse(map.mapData);
+    const parsed = MapCoreSchema.safeParse(map.mapData);
 
-  if (!parsed.success) {
-    console.log(parsed.error.format());
-    return null;
-  }
+    if (!parsed.success) {
+      console.log(parsed.error.format());
+      return null;
+    }
 
-  return {
-    ...map,
-    mapData: parsed.data,
-  };
-}
+    return {
+      ...map,
+      mapData: parsed.data,
+    };
+  },
 
-export async function getUserMaps() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  getUserMaps: async function () {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-  if (!session) {
-    throw new Error("User not found");
-  }
+    if (!session) {
+      throw new Error("User not found");
+    }
 
-  const userMaps = await db
-    .select()
-    .from(mapsSchema)
-    .where(eq(mapsSchema.userId, session.user.id));
+    const userMaps = await db
+      .select()
+      .from(mapsSchema)
+      .where(eq(mapsSchema.userId, session.user.id));
 
-  const result = MapDbSchemaArr.safeParse(userMaps);
+    const result = MapDbSchemaArr.safeParse(userMaps);
 
-  if (!result.success) {
-    console.error("❌ Invalid map data:", result.error);
-    return [];
-  }
+    if (!result.success) {
+      console.error("❌ Invalid map data:", result.error);
+      return [];
+    }
 
-  return result.data;
-}
+    return result.data;
+  },
 
-export async function getExploreMaps(): Promise<MapDbType[]> {
-  const exploreMaps = await db
-    .select()
-    .from(mapsSchema)
-    .where(eq(mapsSchema.isPublic, true));
+  getExploreMaps: async function (): Promise<MapDbType[]> {
+    const exploreMaps = await db
+      .select()
+      .from(mapsSchema)
+      .where(eq(mapsSchema.isPublic, true));
 
-  const result = MapDbSchemaArr.safeParse(exploreMaps);
+    const result = MapDbSchemaArr.safeParse(exploreMaps);
 
-  if (!result.success) {
-    console.error("❌ Invalid map data:", result.error);
-    return [];
-  }
+    if (!result.success) {
+      console.error("❌ Invalid map data:", result.error);
+      return [];
+    }
 
-  return result.data;
-}
+    return result.data;
+  },
 
-export async function getFeaturedMaps(): Promise<MapDbType[]> {
-  const featuredMaps = await db
-    .select()
-    .from(mapsSchema)
-    .orderBy(desc(mapsSchema.likes))
-    .limit(3);
+  getFeaturedMaps: async function (): Promise<MapDbType[]> {
+    const featuredMaps = await db
+      .select()
+      .from(mapsSchema)
+      .orderBy(desc(mapsSchema.likes))
+      .limit(3);
 
-  const result = MapDbSchemaArr.safeParse(featuredMaps);
+    const result = MapDbSchemaArr.safeParse(featuredMaps);
 
-  if (!result.success) {
-    console.error("❌ Invalid map data:", result.error);
-    return [];
-  }
+    if (!result.success) {
+      console.error("❌ Invalid map data:", result.error);
+      return [];
+    }
 
-  return result.data;
-}
+    return result.data;
+  },
 
-export async function getTagRecords(tags: string[]) {
-  return db
-    .select({ id: tags_table.id, name: tags_table.name })
-    .from(tags_table)
-    .where(inArray(tags_table.name, tags));
-}
+  getTagRecords: async function (tags: string[]) {
+    return db
+      .select({ id: tags_table.id, name: tags_table.name })
+      .from(tags_table)
+      .where(inArray(tags_table.name, tags));
+  },
+};

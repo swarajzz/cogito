@@ -1,5 +1,5 @@
 import { ConceptMap } from "@/src/components/concept-map";
-import { getMapData } from "@/src/server/db/queries";
+import { QUERIES } from "@/src/server/db/queries";
 
 export default async function Map({
   params,
@@ -8,7 +8,7 @@ export default async function Map({
 }) {
   const { id } = await params;
 
-  const map = await getMapData(id);
+  const map = await QUERIES.getMapData(id);
 
   if (!map) return null;
 

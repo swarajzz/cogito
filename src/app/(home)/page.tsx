@@ -1,10 +1,10 @@
-import { getFeaturedMaps } from "@/src/server/db/queries";
+import { QUERIES } from "@/src/server/db/queries";
 import Hero from "@/src/components/home/Hero";
 import Features from "@/src/components/home/Features";
 import Featured from "@/src/components/home/Featured";
 
 export default function Home() {
-  const featuredMapsPromise = getFeaturedMaps();
+  const featuredMapsPromise = QUERIES.getFeaturedMaps();
 
   return (
     <>

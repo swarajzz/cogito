@@ -1,5 +1,5 @@
 import Explore from "@/src/components/Explore";
-import { getExploreMaps } from "@/src/server/db/queries";
+import { QUERIES } from "@/src/server/db/queries";
 
 const mockPublicMaps = [
   {
@@ -99,7 +99,7 @@ const mockPublicMaps = [
 ];
 
 export default async function ExplorePage() {
-  const exploreMaps = await getExploreMaps();
+  const exploreMaps = await QUERIES.getExploreMaps();
 
   return <Explore exploreMaps={exploreMaps} />;
 }

@@ -1,10 +1,8 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
 const config: Config = {
   darkMode: ["class"],
-  content: [
-    "./src/**/*.{js,ts,jsx,tsx,mdx}",
-  ],
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
       colors: {
@@ -114,13 +112,15 @@ const config: Config = {
       },
       boxShadow: {
         card: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
-        elevated: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+        elevated:
+          "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
         glow: "0 0 20px rgba(124, 106, 232, 0.3)",
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-in-out",
         "slide-up": "slideUp 0.3s ease-out",
         "pulse-glow": "pulseGlow 2s ease-in-out infinite",
+        heartbeat: "heartbeat 1s infinite",
       },
       keyframes: {
         fadeIn: {
@@ -135,10 +135,14 @@ const config: Config = {
           "0%, 100%": { boxShadow: "0 0 20px rgba(124, 106, 232, 0.3)" },
           "50%": { boxShadow: "0 0 30px rgba(124, 106, 232, 0.5)" },
         },
+        heartbeat: {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.2)" },
+        },
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
+};
 
-export default config
+export default config;

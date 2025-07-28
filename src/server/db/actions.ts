@@ -2,7 +2,7 @@
 
 import { auth } from "@/src/lib/auth";
 import { db } from "@/src/server/db";
-import { getTagRecords } from "@/src/server/db/queries";
+import { QUERIES } from "@/src/server/db/queries";
 import { maps_table } from "@/src/server/db/schema/map-schema";
 import { mapOnTags, tags_table } from "@/src/server/db/schema/tags-schema";
 import { MapCoreSchema, MapFullType } from "@/src/zod-schemas/map";
@@ -99,7 +99,7 @@ export const createMap = async (data: MapFullType) => {
       .values(data.tags.map((tag) => ({ name: tag })))
       .onConflictDoNothing();
 
-    const tagRecords = await getTagRecords(data.tags);
+    const tagRecords = await QUERIES.getTagRecords(data.tags);
 
     const relations = tagRecords.map((tag) => ({
       mapId,
