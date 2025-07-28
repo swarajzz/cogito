@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/src/components/ui/button";
+import { likeMap } from "@/src/server/db/actions";
 import { MapDbType } from "@/src/zod-schemas/map";
 import {
   MoreHorizontal,
@@ -17,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { startTransition, useOptimistic, useState } from "react";
 
 interface MapCardProps {
   map: MapDbType;
@@ -33,10 +34,34 @@ export function MapCard({
   showStats = false,
 }: MapCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [likes, setLikes] = useState(map.likes);
+  const [optiLikes, setOptiLikes] = useOptimistic(likes);
+  const [isLiked, setIsLiked] = useState(false);
 
   const router = useRouter();
 
   const { mapData } = map;
+
+  async function handleLiked(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isLiked) return;
+
+    startTransition(() => {
+      setOptiLikes((prev) => prev + 1);
+    });
+    setIsLiked(true);
+
+    try {
+      const likes = await likeMap(map.id);
+      setLikes(likes);
+    } catch (error) {
+      console.error("Failed to like the map", error);
+      setIsLiked(false);
+      setOptiLikes((prev) => prev - 1);
+    }
+  }
 
   if (viewMode === "list") {
     return (
@@ -79,10 +104,24 @@ export function MapCard({
                     </span>
                     {showStats && (
                       <>
-                        <span className="flex items-center gap-1">
-                          <Heart className="h-3 w-3" />
-                          {map.likes}
-                        </span>
+                        <button
+                          className="flex items-center gap-1"
+                          aria-label="Like Map"
+                          onClick={handleLiked}
+                        >
+                          <Heart
+                            className={`${
+                              !isLiked ? "animate-heartbeat" : ""
+                            } text-red-500 h-3 w-3`}
+                            style={{
+                              fill: isLiked ? "#EF4444" : "transparent",
+                              stroke: "#EF4444",
+                              strokeWidth: 1.5,
+                              transition: "fill 0.6s ease",
+                            }}
+                          />
+                          {optiLikes}
+                        </button>
                         <span className="flex items-center gap-1">
                           <Eye className="h-3 w-3" />
                           {map.views}
@@ -183,10 +222,24 @@ export function MapCard({
 
           {showStats && (
             <div className="flex items-center gap-4 text-xs text-textSecondary mb-4">
-              <span className="flex items-center gap-1">
-                <Heart className="h-3 w-3" />
-                {map.likes}
-              </span>
+              <button
+                className="flex items-center gap-1"
+                aria-label="Like Map"
+                onClick={handleLiked}
+              >
+                <Heart
+                  className={`${
+                    !isLiked ? "animate-heartbeat" : ""
+                  } text-red-500 h-3 w-3`}
+                  style={{
+                    fill: isLiked ? "#EF4444" : "transparent",
+                    stroke: "#EF4444",
+                    strokeWidth: 1.5,
+                    transition: "fill 0.6s ease",
+                  }}
+                />
+                {optiLikes}
+              </button>
               <span className="flex items-center gap-1">
                 <Eye className="h-3 w-3" />
                 {map.views}

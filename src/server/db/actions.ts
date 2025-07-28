@@ -4,11 +4,9 @@ import { auth } from "@/src/lib/auth";
 import { db } from "@/src/server/db";
 import { getTagRecords } from "@/src/server/db/queries";
 import { maps_table } from "@/src/server/db/schema/map-schema";
-import {
-  mapOnTags,
-  tags_table,
-} from "@/src/server/db/schema/tags-schema";
+import { mapOnTags, tags_table } from "@/src/server/db/schema/tags-schema";
 import { MapCoreSchema, MapFullType } from "@/src/zod-schemas/map";
+import { eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 
 export const signIn = async (email: string, password: string) => {
@@ -101,7 +99,7 @@ export const createMap = async (data: MapFullType) => {
       .values(data.tags.map((tag) => ({ name: tag })))
       .onConflictDoNothing();
 
-    const tagRecords = await getTagRecords(data.tags)
+    const tagRecords = await getTagRecords(data.tags);
 
     const relations = tagRecords.map((tag) => ({
       mapId,
@@ -112,4 +110,14 @@ export const createMap = async (data: MapFullType) => {
   }
 
   return { success: true, id: mapId };
+};
+
+export const likeMap = async (mapId: number) => {
+  const [updatedMap] = await db
+    .update(maps_table)
+    .set({ likes: sql`${maps_table.likes} + 1` })
+    .where(eq(maps_table.id, mapId))
+    .returning({ likes: maps_table.likes });
+
+  return updatedMap.likes;
 };
