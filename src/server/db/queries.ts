@@ -7,7 +7,7 @@ import {
   MapDbSchemaArr,
   MapDbType,
 } from "@/src/zod-schemas/map";
-import { eq, inArray, sql } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 
 export async function getMapData(mapId: string): Promise<MapDbType | null> {
@@ -79,7 +79,11 @@ export async function getExploreMaps(): Promise<MapDbType[]> {
 }
 
 export async function getFeaturedMaps(): Promise<MapDbType[]> {
-  const featuredMaps = await db.select().from(mapsSchema);
+  const featuredMaps = await db
+    .select()
+    .from(mapsSchema)
+    .orderBy(desc(mapsSchema.likes))
+    .limit(3);
 
   const result = MapDbSchemaArr.safeParse(featuredMaps);
 

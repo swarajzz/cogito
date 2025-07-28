@@ -174,7 +174,7 @@ export function SignupForm({
                     className="w-full"
                   >
                     <Github />
-                    Sign up with Google
+                    Sign up with Github
                   </Button>
                   <Button
                     type="button"

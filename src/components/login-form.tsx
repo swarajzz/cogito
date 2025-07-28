@@ -101,7 +101,7 @@ export function LoginForm({
                     className="w-full"
                   >
                     <Github />
-                    Login with Google
+                    Login with Github
                   </Button>
                   <Button
                     type="button"

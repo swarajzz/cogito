@@ -265,27 +265,27 @@ export function MapCard({
         </div>
       </Link>
 
-      {/* {showActions && ( */}
-      <div className="px-6 pb-4 flex justify-between items-center border-t border-surface/50 pt-4">
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
-            <Edit className="h-3 w-3 mr-1" />
-            Edit
-          </Button>
-          <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
-            <Share2 className="h-3 w-3 mr-1" />
-            Share
+      {showActions && (
+        <div className="px-6 pb-4 flex justify-between items-center border-t border-surface/50 pt-4">
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
+              <Share2 className="h-3 w-3 mr-1" />
+              Share
+            </Button>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+          >
+            <Trash2 className="h-3 w-3" />
           </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-        >
-          <Trash2 className="h-3 w-3" />
-        </Button>
-      </div>
-      {/* )} */}
+      )}
     </div>
   );
 }
