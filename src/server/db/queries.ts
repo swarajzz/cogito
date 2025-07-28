@@ -1,18 +1,21 @@
 import { auth } from "@/src/lib/auth";
 import { db } from "@/src/server/db";
-import {
-  maps_table as mapsSchema,
-} from "@/src/server/db/schema/map-schema";
+import { maps_table as mapsSchema } from "@/src/server/db/schema/map-schema";
 import { tags_table } from "@/src/server/db/schema/tags-schema";
 import {
   MapCoreSchema,
   MapDbSchemaArr,
   MapDbType,
 } from "@/src/zod-schemas/map";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 
 export async function getMapData(mapId: string): Promise<MapDbType | null> {
+  await db
+    .update(mapsSchema)
+    .set({ views: sql`${mapsSchema.views} + 1` })
+    .where(eq(mapsSchema.id, Number(mapId)));
+
   const result = await db
     .select()
     .from(mapsSchema)
