@@ -25,7 +25,11 @@ const Workspace = ({ userMaps }: { userMaps: MapDbType[] }) => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<"recent" | "name" | "size">("recent");
 
-  const router = useRouter()
+  const router = useRouter();
+
+  const countLastMonth = userMaps.filter(
+    (map) => map.createdAt > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  );
 
   const filteredMaps = userMaps
     .filter(
@@ -106,7 +110,9 @@ const Workspace = ({ userMaps }: { userMaps: MapDbType[] }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-textSecondary text-sm">This Month</p>
-              <p className="text-2xl font-bold text-textPrimary">2</p>
+              <p className="text-2xl font-bold text-textPrimary">
+                {countLastMonth.length}
+              </p>
             </div>
             <div className="p-3 bg-info-100 rounded-lg">
               <Clock className="h-6 w-6 text-info-600" />
