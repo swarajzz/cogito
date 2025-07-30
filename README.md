@@ -43,6 +43,9 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - [x] Setup database and data model
 - [x] Add auth
 - [x] Real homepage + oboarding
+- [x] Add zod validations
+- [x] Pagination
+- [ ] Autocomplete search bar with backend
 - [ ] Create map 
 - [ ] Public && Private maps
 - [ ] Add forgot password fxn.
