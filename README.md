@@ -46,6 +46,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - [x] Add zod validations
 - [x] Pagination
 - [ ] Autocomplete search bar with backend
+- [ ] Caching
 - [ ] Create map 
 - [ ] Public && Private maps
 - [ ] Add forgot password fxn.
