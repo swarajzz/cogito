@@ -1,6 +1,7 @@
 import { pgTable as table } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 import * as t from "drizzle-orm/pg-core";
+import { tags_table } from "@/src/server/db/schema/tags-schema";
 
 export const maps_table = table("maps", {
   id: t.integer().primaryKey().generatedByDefaultAsIdentity(),
@@ -32,3 +33,4 @@ export const maps_table = table("maps", {
 });
 
 export type DB_MapType = typeof maps_table.$inferSelect;
+export type DB_TagType = typeof tags_table.$inferSelect;

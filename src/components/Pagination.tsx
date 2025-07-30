@@ -18,8 +18,6 @@ const PaginationComponent = ({ totalCount }: { totalCount: number }) => {
 
   const totalPageCount = Math.ceil(totalCount / MAPS_PER_PAGE);
 
-  console.log(totalPageCount);
-
   function createPageUrl(pageNumber: number) {
     const params = new URLSearchParams(searchParams);
     params.set("page", pageNumber.toString());

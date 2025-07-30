@@ -99,7 +99,8 @@ const mockPublicMaps = [
 ];
 
 export default async function ExplorePage() {
-  const exploreMaps = await QUERIES.getExploreMaps();
+  const paginatedExploreMaps = await QUERIES.getExploreMaps();
+  const tags = await QUERIES.getTags();
 
-  return <Explore exploreMaps={exploreMaps} />;
+  return <Explore paginatedExploreMaps={paginatedExploreMaps} tags={tags} />;
 }

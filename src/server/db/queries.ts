@@ -71,7 +71,10 @@ export const QUERIES = {
       };
     }
 
-    const [countResult] = await db.select({ count: count() }).from(mapsSchema);
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(mapsSchema)
+      .where(eq(mapsSchema.userId, session.user.id));
 
     return {
       data: result.data,
@@ -81,20 +84,38 @@ export const QUERIES = {
     };
   },
 
-  getExploreMaps: async function (): Promise<MapDbType[]> {
+  getExploreMaps: async function (page: number = 1) {
     const exploreMaps = await db
       .select()
       .from(mapsSchema)
+      .orderBy(asc(mapsSchema.createdAt), asc(mapsSchema.id))
+      .limit(MAPS_PER_PAGE)
+      .offset((page - 1) * MAPS_PER_PAGE)
       .where(eq(mapsSchema.isPublic, true));
 
     const result = MapDbSchemaArr.safeParse(exploreMaps);
 
     if (!result.success) {
       console.error("❌ Invalid map data:", result.error);
-      return [];
+      return {
+        data: [],
+        total: 0,
+        perPage: MAPS_PER_PAGE,
+        page,
+      };
     }
 
-    return result.data;
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(mapsSchema)
+      .where(eq(mapsSchema.isPublic, true));
+
+    return {
+      data: result.data,
+      total: countResult.count,
+      perPage: MAPS_PER_PAGE,
+      page,
+    };
   },
 
   getFeaturedMaps: async function (): Promise<MapDbType[]> {
@@ -119,5 +140,9 @@ export const QUERIES = {
       .select({ id: tagsSchema.id, name: tagsSchema.name })
       .from(tagsSchema)
       .where(inArray(tagsSchema.name, tags));
+  },
+
+  getTags: async function () {
+    return db.select().from(tagsSchema);
   },
 };

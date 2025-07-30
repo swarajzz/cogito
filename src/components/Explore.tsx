@@ -1,25 +1,28 @@
-"use client"
+"use client";
 import React from "react";
 
 import { useState } from "react";
 import { Button } from "@/src/components/ui/button";
 import { MapCard } from "@/src/components/MapCard";
-import { ConceptMap } from "@/src/components/concept-map";
-import {
-  Search,
-  Filter,
-  Grid3X3,
-  List,
-  Brain,
-  ArrowLeft,
-  Globe,
-  Tag,
-} from "lucide-react";
+import { Search, Filter, Grid3X3, List, Globe, Tag } from "lucide-react";
 import { MapDbType } from "@/src/zod-schemas/map";
+import { DB_TagType } from "@/src/server/db/schema/map-schema";
+import PaginationComponent from "@/src/components/Pagination";
 
-// const allTags = Array.from(new Set(mockPublicMaps.flatMap((map) => map.tags)));
+interface PaginatedExploreMaps {
+  data: MapDbType[];
+  page: number;
+  perPage: number;
+  total: number;
+}
 
-const Explore = ({ exploreMaps }: { exploreMaps: MapDbType[] }) => {
+const Explore = ({
+  paginatedExploreMaps,
+  tags,
+}: {
+  paginatedExploreMaps: PaginatedExploreMaps;
+  tags: DB_TagType[];
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -27,6 +30,8 @@ const Explore = ({ exploreMaps }: { exploreMaps: MapDbType[] }) => {
     "popular"
   );
   const [showFilters, setShowFilters] = useState(false);
+
+  const { data: exploreMaps, total, page } = paginatedExploreMaps;
 
   const filteredMaps = exploreMaps
     .filter((map) => {
@@ -99,7 +104,7 @@ const Explore = ({ exploreMaps }: { exploreMaps: MapDbType[] }) => {
           </div>
           <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-card border border-surface/50 text-center">
             <div className="text-2xl font-bold text-info-600">
-              {/* {allTags.length} */}
+              {tags.length}
             </div>
             <div className="text-sm text-textSecondary">Categories</div>
           </div>
@@ -246,6 +251,8 @@ const Explore = ({ exploreMaps }: { exploreMaps: MapDbType[] }) => {
           </div>
         )}
       </div>
+
+      <PaginationComponent totalCount={total} />
     </main>
   );
 };
