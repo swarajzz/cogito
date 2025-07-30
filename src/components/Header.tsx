@@ -10,15 +10,11 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
-type Session = typeof auth.$Infer.Session;
-
-const Header = ({
-  session,
-}: {
-  session: Session | null;
-}) => {
+const Header = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const { data: session } = authClient.useSession();
 
   const isLoggedIn = !!session;
 
