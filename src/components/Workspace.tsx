@@ -2,6 +2,8 @@
 
 import { CreateMapModal } from "@/src/components/CreateMapModal";
 import { MapCard } from "@/src/components/MapCard";
+import PaginationComponent from "@/src/components/Pagination";
+import Pagination from "@/src/components/Pagination";
 import { Button } from "@/src/components/ui/button";
 import { maps_table as mapsSchema } from "@/src/server/db/schema/map-schema";
 import { MapDbType } from "@/src/zod-schemas/map";
@@ -16,14 +18,23 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 
-const Workspace = ({ userMaps }: { userMaps: MapDbType[] }) => {
+interface PaginatedUserMaps {
+  data: MapDbType[];
+  page: number;
+  perPage: number;
+  total: number;
+}
+
+const Workspace = ({ paginatedMaps }: { paginatedMaps: PaginatedUserMaps }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedMap, setSelectedMap] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<"recent" | "name" | "size">("recent");
+
+  const { data: userMaps, total, perPage, page } = paginatedMaps;
 
   const router = useRouter();
 
@@ -220,6 +231,8 @@ const Workspace = ({ userMaps }: { userMaps: MapDbType[] }) => {
           }}
         />
       )}
+
+      <PaginationComponent totalCount={total} />
     </div>
   );
 };
