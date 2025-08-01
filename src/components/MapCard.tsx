@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/src/components/ui/button";
+import { DOMAIN } from "@/src/lib/constants";
 import { likeMap } from "@/src/server/db/actions";
 import { MapDbType } from "@/src/zod-schemas/map";
 import {
@@ -17,8 +18,9 @@ import {
   Network,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { startTransition, useOptimistic, useState } from "react";
+import { toast } from "sonner";
 
 interface MapCardProps {
   map: MapDbType;
@@ -38,9 +40,23 @@ export function MapCard({
   const [optiLikes, setOptiLikes] = useOptimistic(likes);
   const [isLiked, setIsLiked] = useState(false);
 
+  const pathname = usePathname();
+
   const router = useRouter();
 
   const { mapData } = map;
+
+  function handleShare(id: number) {
+    navigator.clipboard
+      .writeText(`${DOMAIN}/map/${id}`)
+      .then(() => {
+        toast.success("Link successfully copied to clipboard to share");
+      })
+      .catch((err) => {
+        console.error("Failed to copy:", err);
+        toast.error("Failed to copy to clipboard");
+      });
+  }
 
   async function handleLiked(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -146,18 +162,23 @@ export function MapCard({
               </Button>
               {showMenu && (
                 <div className="absolute right-0 top-10 bg-white border border-surface rounded-lg shadow-elevated p-2 z-10 min-w-[120px]">
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface rounded-md flex items-center gap-2">
+                  {/* <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface rounded-md flex items-center gap-2">
                     <Edit className="h-3 w-3" />
                     Edit
-                  </button>
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface rounded-md flex items-center gap-2">
+                  </button> */}
+                  <button
+                    onClick={() => handleShare(map.id)}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-surface rounded-md flex items-center gap-2"
+                  >
                     <Share2 className="h-3 w-3" />
                     Share
                   </button>
-                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface rounded-md flex items-center gap-2 text-red-600">
-                    <Trash2 className="h-3 w-3" />
-                    Delete
-                  </button>
+                  {!pathname.includes("explore") && (
+                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface rounded-md flex items-center gap-2 text-red-600">
+                      <Trash2 className="h-3 w-3" />
+                      Delete
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -268,22 +289,29 @@ export function MapCard({
       {showActions && (
         <div className="px-6 pb-4 flex justify-between items-center border-t border-surface/50 pt-4">
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
+            {/* <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
               <Edit className="h-3 w-3 mr-1" />
               Edit
-            </Button>
-            <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
+            </Button> */}
+            <Button
+              onClick={() => handleShare(map.id)}
+              variant="ghost"
+              size="sm"
+              className="h-8 px-3 text-xs"
+            >
               <Share2 className="h-3 w-3 mr-1" />
               Share
             </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
+          {!pathname.includes("explore") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
         </div>
       )}
     </div>

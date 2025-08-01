@@ -155,7 +155,7 @@ const Explore = ({
                 key={map.id}
                 map={map}
                 viewMode={viewMode}
-                showActions={false}
+                showActions={true}
                 showStats={true}
               />
             ))}

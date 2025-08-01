@@ -150,6 +150,7 @@ const Workspace = ({ paginatedMaps }: { paginatedMaps: PaginatedUserMaps }) => {
               key={map.id}
               map={map}
               viewMode={viewMode}
+              showStats={true}
               showActions={true}
             />
           ))}

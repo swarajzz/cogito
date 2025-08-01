@@ -126,7 +126,7 @@ export function CreateMapModal({ onClose, onMapCreated }: CreateMapModalProps) {
               ))}
             </div>
           </div>
-
+{/* 
           <div>
             <div className="text-sm font-semibold text-textPrimary mb-3">
               Map Detail Level
@@ -172,7 +172,7 @@ export function CreateMapModal({ onClose, onMapCreated }: CreateMapModalProps) {
               {complexityLevel === "thorough" &&
                 "Detailed exploration with comprehensive coverage and nuanced relationships."}
             </div>
-          </div>
+          </div> */}
 
           {error && (
             <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl">

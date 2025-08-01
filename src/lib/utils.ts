@@ -41,7 +41,7 @@ export function getSystemPrompt(complexityLevel: string) {
               "resources": [
                 {
                   "title": "Resource title",
-                  "url": "URL string (optional)",
+                  "url": "URL string (optional)", // Optional – include if available or useful
                   "description": "Brief description of the resource"
                 }
               ]
@@ -71,7 +71,7 @@ export function getSystemPrompt(complexityLevel: string) {
   ]
         }
         
-        ${getComplexityInstructions(complexityLevel)}
+        ${getComplexityInstructions("thorough")}
         
         Be sure to follow these definitions strictly:
         - Return only **valid JSON**, no markdown, no explanation.

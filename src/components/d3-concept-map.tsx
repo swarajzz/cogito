@@ -1,139 +1,137 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react"
-import * as d3 from "d3"
-import { MapControls } from "./MapControls"
-import { NodeDetailPanel } from "./NodeDetailPanel"
-import { X, Layers } from "lucide-react"
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import * as d3 from "d3";
+import { MapControls } from "./MapControls";
+import { NodeDetailPanel } from "./NodeDetailPanel";
+import { X, Layers } from "lucide-react";
+import { MapCoreType } from "@/src/zod-schemas/map";
 
-interface D3ConceptMapProps {
-  data: {
-    summary: string
-    nodes: Array<{
-      id: string
-      label: string
-      type: string
-      description: string
-      importance: number
-      discipline?: string
-      year?: number
-      period?: string
-      location?: string
-      resources?: Array<{
-        title: string
-        url?: string
-        description?: string
-      }>
-    }>
-    edges: Array<{
-      id: string
-      source: string
-      target: string
-      label: string
-      type: string
-      strength?: number
-    }>
-    disciplines: string[]
-    timespan?: {
-      start?: number
-      end?: number
-    }
-    geography?: string[]
-    keyThemes?: string[]
-  }
-  initialComplexity?: string
-}
+export function D3ConceptMap({
+  data,
+  initialComplexity = "thorough",
+}: {
+  data: MapCoreType;
+  initialComplexity?: string;
+}) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredDisciplines, setFilteredDisciplines] = useState<string[]>([]);
+  const [selectedNode, setSelectedNode] = useState<any>(null);
+  const [complexity, setComplexity] = useState(initialComplexity);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
-export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3ConceptMapProps) {
-  const svgRef = useRef<SVGSVGElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filteredDisciplines, setFilteredDisciplines] = useState<string[]>([])
-  const [selectedNode, setSelectedNode] = useState<any>(null)
-  const [complexity, setComplexity] = useState(initialComplexity)
-  const [zoomLevel, setZoomLevel] = useState(1)
-
-  const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null)
-  const svgSelectionRef = useRef<d3.Selection<SVGSVGElement, unknown, null, undefined> | null>(null)
-  const zoomRef = useRef<{ zoomIn: () => void; zoomOut: () => void; fitView: () => void } | null>(null)
+  const zoomBehaviorRef = useRef<d3.ZoomBehavior<
+    SVGSVGElement,
+    unknown
+  > | null>(null);
+  const svgSelectionRef = useRef<d3.Selection<
+    SVGSVGElement,
+    unknown,
+    null,
+    undefined
+  > | null>(null);
+  const zoomRef = useRef<{
+    zoomIn: () => void;
+    zoomOut: () => void;
+    fitView: () => void;
+  } | null>(null);
 
   // Filter nodes based on complexity
   const filteredNodes = useMemo(() => {
-    if (!data?.nodes) return []
+    if (!data?.nodes) return [];
 
-    if (complexity === "thorough") return data.nodes
-    if (complexity === "minimal") return data.nodes.filter((node) => (node.importance || 0) >= 7)
-    return data.nodes.filter((node) => (node.importance || 0) >= 5)
-  }, [data?.nodes, complexity])
+    if (complexity === "thorough") return data.nodes;
+    if (complexity === "minimal")
+      return data.nodes.filter((node) => (node.importance || 0) >= 7);
+    return data.nodes.filter((node) => (node.importance || 0) >= 5);
+  }, [data?.nodes, complexity]);
 
   // Filter edges based on complexity and visible nodes
   const filteredEdges = useMemo(() => {
-    if (!data?.edges) return []
+    if (!data?.edges) return [];
 
-    const visibleNodeIds = new Set(filteredNodes.map((node) => node.id))
-    let edges = data.edges.filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
+    const visibleNodeIds = new Set(filteredNodes.map((node) => node.id));
+    let edges = data.edges.filter(
+      (edge) =>
+        visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)
+    );
 
     if (complexity === "minimal") {
       edges = edges.filter(
-        (edge) => (edge.strength || 0) >= 4 || edge.type === "builds_upon" || edge.type === "part_of",
-      )
+        (edge) =>
+          (edge.strength || 0) >= 4 ||
+          edge.type === "builds_upon" ||
+          edge.type === "part_of"
+      );
     } else if (complexity === "moderate") {
-      edges = edges.filter((edge) => (edge.strength || 0) >= 2)
+      edges = edges.filter((edge) => (edge.strength || 0) >= 2);
     }
 
-    return edges
-  }, [data?.edges, filteredNodes, complexity])
+    return edges;
+  }, [data?.edges, filteredNodes, complexity]);
 
   // Apply search and discipline filters
   const finalFilteredNodes = useMemo(() => {
-    let filtered = filteredNodes
+    let filtered = filteredNodes;
 
     if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase()
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (node) =>
           node.label?.toLowerCase().includes(searchLower) ||
           node.description?.toLowerCase().includes(searchLower) ||
           node.location?.toLowerCase().includes(searchLower) ||
-          node.period?.toLowerCase().includes(searchLower),
-      )
+          node.period?.toLowerCase().includes(searchLower)
+      );
     }
 
     if (filteredDisciplines.length > 0) {
-      filtered = filtered.filter((node) => filteredDisciplines.includes(node.discipline || ""))
+      filtered = filtered.filter((node) =>
+        filteredDisciplines.includes(node.discipline || "")
+      );
     }
 
-    return filtered
-  }, [filteredNodes, searchTerm, filteredDisciplines])
+    return filtered;
+  }, [filteredNodes, searchTerm, filteredDisciplines]);
 
   // Filter edges to only include those between visible nodes
   const finalFilteredEdges = useMemo(() => {
-    const visibleNodeIds = new Set(finalFilteredNodes.map((node) => node.id))
-    return filteredEdges.filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
-  }, [filteredEdges, finalFilteredNodes])
+    const visibleNodeIds = new Set(finalFilteredNodes.map((node) => node.id));
+    return filteredEdges.filter(
+      (edge) =>
+        visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)
+    );
+  }, [filteredEdges, finalFilteredNodes]);
 
   // Find related nodes and edges for the selected node
   const relatedNodesAndEdges = useMemo(() => {
-    if (!selectedNode || !data?.edges) return { nodes: [], edges: [] }
+    if (!selectedNode || !data?.edges) return { nodes: [], edges: [] };
 
-    const relatedEdges = data.edges.filter((edge) => edge.source === selectedNode.id || edge.target === selectedNode.id)
-    const relatedNodeIds = new Set<string>()
+    const relatedEdges = data.edges.filter(
+      (edge) =>
+        edge.source === selectedNode.id || edge.target === selectedNode.id
+    );
+    const relatedNodeIds = new Set<string>();
     relatedEdges.forEach((edge) => {
-      relatedNodeIds.add(edge.source)
-      relatedNodeIds.add(edge.target)
-    })
+      relatedNodeIds.add(edge.source);
+      relatedNodeIds.add(edge.target);
+    });
 
-    const relatedNodes = (data.nodes || []).filter((node) => relatedNodeIds.has(node.id))
+    const relatedNodes = (data.nodes || []).filter((node) =>
+      relatedNodeIds.has(node.id)
+    );
 
     return {
       nodes: relatedNodes,
       edges: relatedEdges,
-    }
-  }, [selectedNode, data])
+    };
+  }, [selectedNode, data]);
 
   const onZoomChange = useCallback((zoom: any) => {
-    setZoomLevel(zoom.k)
-  }, [])
+    setZoomLevel(zoom.k);
+  }, []);
 
   // Get node styles based on type
   const getNodeStyles = (type: string) => {
@@ -145,7 +143,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#7C6AE8",
           textColor: "#5B3BB8",
           icon: "👤",
-        }
+        };
       case "concept":
         return {
           background: "white",
@@ -153,7 +151,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#64748B",
           textColor: "#1E293B",
           icon: "💡",
-        }
+        };
       case "event":
         return {
           background: "white",
@@ -162,7 +160,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#EE9B56",
           textColor: "#1E293B",
           icon: "📅",
-        }
+        };
       case "theory":
         return {
           background: "white",
@@ -170,7 +168,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#7C6AE8",
           textColor: "#5B3BB8",
           icon: "🧠",
-        }
+        };
       case "work":
         return {
           background: "white",
@@ -179,7 +177,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#7C6AE8",
           textColor: "#5B3BB8",
           icon: "📚",
-        }
+        };
       case "movement":
         return {
           background: "#F0F4FF",
@@ -187,7 +185,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#EE9B56",
           textColor: "#1E293B",
           icon: "👥",
-        }
+        };
       case "place":
         return {
           background: "#F0FDF4",
@@ -195,7 +193,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#22C55E",
           textColor: "#1E293B",
           icon: "🌍",
-        }
+        };
       case "organization":
         return {
           background: "#FFFBEB",
@@ -203,7 +201,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#F59E0B",
           textColor: "#1E293B",
           icon: "🏢",
-        }
+        };
       case "technology":
         return {
           background: "#EFF6FF",
@@ -211,7 +209,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#3B82F6",
           textColor: "#1E293B",
           icon: "⚙️",
-        }
+        };
       case "discovery":
       case "invention":
         return {
@@ -220,7 +218,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#A855F7",
           textColor: "#1E293B",
           icon: "🔬",
-        }
+        };
       case "method":
       case "technique":
       case "process":
@@ -230,7 +228,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#14B8A6",
           textColor: "#1E293B",
           icon: "🔧",
-        }
+        };
       case "principle":
       case "law":
       case "phenomenon":
@@ -240,7 +238,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#F59E0B",
           textColor: "#1E293B",
           icon: "⚡",
-        }
+        };
       case "system":
       case "structure":
         return {
@@ -249,7 +247,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#78716C",
           textColor: "#1E293B",
           icon: "🏗️",
-        }
+        };
       case "resource":
       case "tool":
         return {
@@ -258,7 +256,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#6366F1",
           textColor: "#1E293B",
           icon: "🛠️",
-        }
+        };
       case "culture":
       case "tradition":
       case "practice":
@@ -268,7 +266,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#EC4899",
           textColor: "#1E293B",
           icon: "🎭",
-        }
+        };
       case "ideology":
       case "belief":
       case "value":
@@ -278,7 +276,7 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#84CC16",
           textColor: "#1E293B",
           icon: "💭",
-        }
+        };
       default:
         return {
           background: "white",
@@ -286,56 +284,58 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           iconBg: "#64748B",
           textColor: "#1E293B",
           icon: "⚪",
-        }
+        };
     }
-  }
+  };
 
   useEffect(() => {
-    if (!svgRef.current || !containerRef.current || !finalFilteredNodes.length) return
+    if (!svgRef.current || !containerRef.current || !finalFilteredNodes.length)
+      return;
 
-    const container = containerRef.current
-    const svg = d3.select(svgRef.current)
+    const container = containerRef.current;
+    const svg = d3.select(svgRef.current);
 
     // Clear previous content
-    svg.selectAll("*").remove()
+    svg.selectAll("*").remove();
 
     // Get container dimensions
-    const rect = container.getBoundingClientRect()
-    const width = rect.width
-    const height = rect.height
+    const rect = container.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
 
     // Set SVG dimensions
-    svg.attr("width", width).attr("height", height)
+    svg.attr("width", width).attr("height", height);
 
     // Create main group for zoom/pan
-    const g = svg.append("g")
+    const g = svg.append("g");
 
     // Create zoom behavior
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 3])
       .on("zoom", (event) => {
-        g.attr("transform", event.transform)
-        onZoomChange(event.transform)
-      })
+        g.attr("transform", event.transform);
+        onZoomChange(event.transform);
+      });
 
-    svg.call(zoom)
+    svg.call(zoom);
 
-    svgSelectionRef.current = svg
-    zoomBehaviorRef.current = zoom
+    svgSelectionRef.current = svg;
+    zoomBehaviorRef.current = zoom;
 
     zoomRef.current = {
       zoomIn: () => svg.transition().duration(250).call(zoom.scaleBy, 1.2),
       zoomOut: () => svg.transition().duration(250).call(zoom.scaleBy, 0.8),
       fitView: () => {
-        const bounds = g.node()?.getBBox()
-        if (!bounds) return
-        const fullWidth = width
-        const fullHeight = height
-        const rawScale = Math.min(fullWidth / bounds.width, fullHeight / bounds.height) * 1
-        const scale = Math.min(rawScale, 2.0)
-        const centerX = fullWidth / 2
-        const centerY = fullHeight / 2
+        const bounds = g.node()?.getBBox();
+        if (!bounds) return;
+        const fullWidth = width;
+        const fullHeight = height;
+        const rawScale =
+          Math.min(fullWidth / bounds.width, fullHeight / bounds.height) * 1;
+        const scale = Math.min(rawScale, 2.0);
+        const centerX = fullWidth / 2;
+        const centerY = fullHeight / 2;
         svg
           .transition()
           .duration(750)
@@ -344,23 +344,26 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
             d3.zoomIdentity
               .translate(centerX, centerY)
               .scale(scale)
-              .translate(-bounds.x - bounds.width / 2, -bounds.y - bounds.height / 2),
-          )
+              .translate(
+                -bounds.x - bounds.width / 2,
+                -bounds.y - bounds.height / 2
+              )
+          );
       },
-    }
+    };
 
     // Prepare data for simulation
     const nodes = finalFilteredNodes.map((node) => ({
       ...node,
       x: width / 2 + (Math.random() - 0.5) * 400,
       y: height / 2 + (Math.random() - 0.5) * 400,
-    }))
+    }));
 
     const links = finalFilteredEdges.map((edge) => ({
       ...edge,
       source: edge.source,
       target: edge.target,
-    }))
+    }));
 
     // Create force simulation with better spacing
     const simulation = d3
@@ -372,36 +375,36 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           .id((d: any) => d.id)
           .distance((d: any) => {
             // Adjust distances based on relationship type
-            const baseDistance = 300
+            const baseDistance = 300;
             switch (d.type) {
               case "part_of":
               case "contains":
-                return baseDistance * 0.7
+                return baseDistance * 0.7;
               case "builds_upon":
               case "evolves_from":
-                return baseDistance * 0.9
+                return baseDistance * 0.9;
               case "influences":
               case "causes":
               case "leads_to":
-                return baseDistance * 1.2
+                return baseDistance * 1.2;
               case "similar_to":
               case "competes_with":
-                return baseDistance * 1.0
+                return baseDistance * 1.0;
               case "located_in":
               case "occurs_in":
-                return baseDistance * 0.8
+                return baseDistance * 0.8;
               default:
-                return baseDistance
+                return baseDistance;
             }
           })
-          .strength(0.3),
+          .strength(0.3)
       )
       .force(
         "charge",
         d3.forceManyBody().strength((d: any) => {
-          const baseStrength = -2000
-          return baseStrength * (1 + (d.importance || 5) / 10)
-        }),
+          const baseStrength = -2000;
+          return baseStrength * (1 + (d.importance || 5) / 10);
+        })
       )
       .force("center", d3.forceCenter(width / 2, height / 2).strength(0.05))
       .force(
@@ -409,17 +412,20 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
         d3
           .forceCollide()
           .radius((d: any) => {
-            const baseRadius = 120
-            return baseRadius + (d.importance || 5) * 8
+            const baseRadius = 120;
+            return baseRadius + (d.importance || 5) * 8;
           })
-          .strength(1.0),
+          .strength(1.0)
       )
-      .force("radial", d3.forceRadial(200, width / 2, height / 2).strength(0.02))
+      .force(
+        "radial",
+        d3.forceRadial(200, width / 2, height / 2).strength(0.02)
+      )
       .force("x", d3.forceX(width / 2).strength(0.02))
-      .force("y", d3.forceY(height / 2).strength(0.02))
+      .force("y", d3.forceY(height / 2).strength(0.02));
 
     // Create links group
-    const linkGroup = g.append("g").attr("class", "links")
+    const linkGroup = g.append("g").attr("class", "links");
 
     // Create links with different colors based on relationship type
     const link = linkGroup
@@ -432,38 +438,42 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           case "influences":
           case "builds_upon":
           case "evolves_from":
-            return "#7C6AE8"
+            return "#7C6AE8";
           case "critiques":
           case "contradicts":
           case "opposes":
-            return "#EF4444"
+            return "#EF4444";
           case "causes":
           case "leads_to":
           case "results_in":
-            return "#EE9B56"
+            return "#EE9B56";
           case "part_of":
           case "contains":
           case "located_in":
-            return "#64748B"
+            return "#64748B";
           case "similar_to":
           case "competes_with":
-            return "#A855F7"
+            return "#A855F7";
           case "collaborates_with":
           case "supports":
-            return "#22C55E"
+            return "#22C55E";
           case "created_by":
           case "discovered_by":
           case "invented_by":
-            return "#F59E0B"
+            return "#F59E0B";
           default:
-            return "#94A3B8"
+            return "#94A3B8";
         }
       })
       .attr("stroke-opacity", 0.4)
       .attr("stroke-width", (d: any) => 1 + (d.strength || 1) * 0.3)
       .attr("stroke-dasharray", (d: any) => {
-        return d.type === "critiques" || d.type === "similar_to" || d.type === "different_from" ? "5,5" : "none"
-      })
+        return d.type === "critiques" ||
+          d.type === "similar_to" ||
+          d.type === "different_from"
+          ? "5,5"
+          : "none";
+      });
 
     // Create link labels (only show for important connections)
     const linkLabels = g
@@ -480,10 +490,10 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       .attr("dy", -2)
       .style("pointer-events", "none")
       .style("opacity", 0.7)
-      .text((d: any) => d.label)
+      .text((d: any) => d.label);
 
     // Create nodes group
-    const nodeGroup = g.append("g").attr("class", "nodes")
+    const nodeGroup = g.append("g").attr("class", "nodes");
 
     // Create nodes using foreignObject to embed HTML
     const node = nodeGroup
@@ -495,10 +505,12 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       .attr("height", 100)
       .style("overflow", "visible")
       .html((d: any) => {
-        const width = Math.max(160, 160 + d.importance * 8)
-        const isSelected = selectedNode?.id === d.id
-        const styles = getNodeStyles(d.type)
-        const selectedClass = isSelected ? "ring-2 ring-primary-400 ring-offset-2" : ""
+        const width = Math.max(160, 160 + d.importance * 8);
+        const isSelected = selectedNode?.id === d.id;
+        const styles = getNodeStyles(d.type);
+        const selectedClass = isSelected
+          ? "ring-2 ring-primary-400 ring-offset-2"
+          : "";
 
         return `
           <div class="concept-node ${selectedClass}" style="
@@ -506,7 +518,13 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
             min-height: 80px;
             background: ${styles.background};
             border: ${styles.border};
-            ${styles.borderStyle === "border-left" ? "border-left: 4px solid " + styles.iconBg + "; border-top: 1px solid #F1F5F9; border-right: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9;" : ""}
+            ${
+              styles.borderStyle === "border-left"
+                ? "border-left: 4px solid " +
+                  styles.iconBg +
+                  "; border-top: 1px solid #F1F5F9; border-right: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9;"
+                : ""
+            }
             border-radius: 12px;
             padding: 12px;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
@@ -544,7 +562,11 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
                     margin: 0;
                     ${d.type === "work" ? "font-style: italic;" : ""}
                   ">${d.label}</h3>
-                  ${d.year ? `<span style="font-size: 10px; color: #64748B; margin-left: 4px; flex-shrink: 0;">${d.year}</span>` : ""}
+                  ${
+                    d.year
+                      ? `<span style="font-size: 10px; color: #64748B; margin-left: 4px; flex-shrink: 0;">${d.year}</span>`
+                      : ""
+                  }
                 </div>
                 <p style="
                   font-size: 10px;
@@ -552,61 +574,76 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
                   line-height: 1.4;
                   margin: 0;
                 ">${d.description}</p>
-                ${d.location ? `<div style="font-size: 9px; color: #64748B; margin-top: 2px;">📍 ${d.location}</div>` : ""}
-                ${d.period ? `<div style="font-size: 9px; color: #64748B; margin-top: 2px;">⏰ ${d.period}</div>` : ""}
+                ${
+                  d.location
+                    ? `<div style="font-size: 9px; color: #64748B; margin-top: 2px;">📍 ${d.location}</div>`
+                    : ""
+                }
+                ${
+                  d.period
+                    ? `<div style="font-size: 9px; color: #64748B; margin-top: 2px;">⏰ ${d.period}</div>`
+                    : ""
+                }
               </div>
             </div>
           </div>
-        `
+        `;
       })
       .on("click", (event, d: any) => {
-        event.stopPropagation()
-        setSelectedNode(d)
+        event.stopPropagation();
+        setSelectedNode(d);
       })
       .on("mouseover", (event, d: any) => {
         // Highlight connected edges and nodes
         link
           .attr("stroke-opacity", (linkData: any) =>
-            linkData.source.id === d.id || linkData.target.id === d.id ? 0.8 : 0.1,
+            linkData.source.id === d.id || linkData.target.id === d.id
+              ? 0.8
+              : 0.1
           )
           .attr("stroke-width", (linkData: any) =>
             linkData.source.id === d.id || linkData.target.id === d.id
               ? (1 + (linkData.strength || 1) * 0.3) * 2
-              : 1 + (linkData.strength || 1) * 0.3,
-          )
+              : 1 + (linkData.strength || 1) * 0.3
+          );
 
         node.style("opacity", (nodeData: any) => {
-          if (nodeData.id === d.id) return 1
+          if (nodeData.id === d.id) return 1;
           const isConnected = links.some(
             (link: any) =>
               (link.source.id === d.id && link.target.id === nodeData.id) ||
-              (link.target.id === d.id && link.source.id === nodeData.id),
-          )
-          return isConnected ? 1 : 0.3
-        })
+              (link.target.id === d.id && link.source.id === nodeData.id)
+          );
+          return isConnected ? 1 : 0.3;
+        });
       })
       .on("mouseout", (event, d: any) => {
-        link.attr("stroke-opacity", 0.4).attr("stroke-width", (linkData: any) => 1 + (linkData.strength || 1) * 0.3)
-        node.style("opacity", 1)
+        link
+          .attr("stroke-opacity", 0.4)
+          .attr(
+            "stroke-width",
+            (linkData: any) => 1 + (linkData.strength || 1) * 0.3
+          );
+        node.style("opacity", 1);
       })
       .call(
         d3
           .drag<SVGForeignObjectElement, any>()
           .on("start", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0.3).restart()
-            d.fx = d.x
-            d.fy = d.y
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
           })
           .on("drag", (event, d) => {
-            d.fx = event.x
-            d.fy = event.y
+            d.fx = event.x;
+            d.fy = event.y;
           })
           .on("end", (event, d) => {
-            if (!event.active) simulation.alphaTarget(0)
-            d.fx = null
-            d.fy = null
-          }),
-      )
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+          })
+      );
 
     // Update positions on tick
     simulation.on("tick", () => {
@@ -614,58 +651,62 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
         .attr("x1", (d: any) => d.source.x)
         .attr("y1", (d: any) => d.source.y)
         .attr("x2", (d: any) => d.target.x)
-        .attr("y2", (d: any) => d.target.y)
+        .attr("y2", (d: any) => d.target.y);
 
       linkLabels
         .attr("x", (d: any) => (d.source.x + d.target.x) / 2)
-        .attr("y", (d: any) => (d.source.y + d.target.y) / 2)
+        .attr("y", (d: any) => (d.source.y + d.target.y) / 2);
 
-      node.attr("x", (d: any) => d.x - 80).attr("y", (d: any) => d.y - 40)
-    })
+      node.attr("x", (d: any) => d.x - 80).attr("y", (d: any) => d.y - 40);
+    });
 
     // Click outside to deselect
     svg.on("click", (event) => {
       if (event.target === svg.node()) {
-        setSelectedNode(null)
+        setSelectedNode(null);
       }
-    })
+    });
 
     // Initial zoom to fit after simulation settles
     setTimeout(() => {
-      zoomRef.current?.fitView()
-    }, 2000)
+      zoomRef.current?.fitView();
+    }, 2000);
 
     return () => {
-      simulation.stop()
-    }
-  }, [
-    finalFilteredNodes,
-    finalFilteredEdges,
-    ]
-  )
+      simulation.stop();
+    };
+  }, [finalFilteredNodes, finalFilteredEdges]);
 
   return (
     <div className="w-full h-full relative" ref={containerRef}>
       {/* Summary Panel */}
-      <div className="hidden md:block absolute top-4 left-4 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-elevated max-w-sm z-10 border border-surface/50">
-        <h3 className="font-heading text-lg font-semibold text-primary-600 mb-2">Summary</h3>
-        <p className="text-sm text-textSecondary leading-relaxed">{data.summary}</p>
+      <div className="hidden lg:block absolute top-4 left-4 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-elevated max-w-sm z-10 border border-surface/50">
+        <h3 className="font-heading text-lg font-semibold text-primary-600 mb-2">
+          Summary
+        </h3>
+        <p className="text-sm text-textSecondary leading-relaxed">
+          {data.summary}
+        </p>
         {data.timespan && (
           <div className="mt-3 text-xs text-textSecondary">
-            <span className="font-medium">Timespan:</span> {data.timespan.start} - {data.timespan.end}
+            <span className="font-medium">Timespan:</span> {data.timespan.start}{" "}
+            - {data.timespan.end}
           </div>
         )}
         {data.geography && data.geography.length > 0 && (
           <div className="mt-2 text-xs text-textSecondary">
-            <span className="font-medium">Geography:</span> {data.geography.join(", ")}
+            <span className="font-medium">Geography:</span>{" "}
+            {data.geography.join(", ")}
           </div>
         )}
         <div className="mt-2 text-xs text-textSecondary">
-          <span className="font-medium">Fields:</span> {data.disciplines?.join(", ")}
+          <span className="font-medium">Fields:</span>{" "}
+          {data.disciplines?.join(", ")}
         </div>
         {data.keyThemes && data.keyThemes.length > 0 && (
           <div className="mt-2 text-xs text-textSecondary">
-            <span className="font-medium">Key Themes:</span> {data.keyThemes.join(", ")}
+            <span className="font-medium">Key Themes:</span>{" "}
+            {data.keyThemes.join(", ")}
           </div>
         )}
       </div>
@@ -688,8 +729,10 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       </div>
 
       {/* Enhanced Legend Panel */}
-       <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-elevated z-10 max-h-80 overflow-y-auto border border-surface/50">
-        <h4 className="font-medium text-textPrimary text-sm mb-2">Node Types</h4>
+      <div className="absolute bottom-2 right-2 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-elevated z-10 max-h-80 overflow-y-auto border border-surface/50">
+        <h4 className="font-medium text-textPrimary text-sm mb-2">
+          Node Types
+        </h4>
         <div className="grid grid-cols-2 gap-1 text-xs">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-primary-500 rounded border"></div>
@@ -725,7 +768,9 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
           </div>
         </div>
         <div className="mt-3">
-          <h5 className="font-medium text-textPrimary text-xs mb-1">Relationships</h5>
+          <h5 className="font-medium text-textPrimary text-xs mb-1">
+            Relationships
+          </h5>
           <div className="space-y-1 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-4 h-0.5 bg-primary-500"></div>
@@ -752,25 +797,41 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       </div>
 
       {/* Results Info */}
-      {(searchTerm || filteredDisciplines.length > 0 || complexity !== "thorough") && (
+      {(searchTerm ||
+        filteredDisciplines.length > 0 ||
+        complexity !== "thorough") && (
         <div className="hidden md:block absolute bottom-2 left-4 bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-elevated z-10 border border-surface/50">
           <div className="text-sm text-textSecondary">
             <div className="flex items-center gap-2">
               <Layers className="h-4 w-4 text-primary-500" />
               <span>
-                Complexity: <span className="font-medium text-primary-600 capitalize">{complexity}</span>
+                Complexity:{" "}
+                <span className="font-medium text-primary-600 capitalize">
+                  {complexity}
+                </span>
               </span>
             </div>
             <div className="mt-1">
-              Showing <span className="font-medium text-primary-600">{finalFilteredNodes.length}</span> of{" "}
-              <span className="font-medium">{data.nodes?.length || 0}</span> nodes
+              Showing{" "}
+              <span className="font-medium text-primary-600">
+                {finalFilteredNodes.length}
+              </span>{" "}
+              of <span className="font-medium">{data.nodes?.length || 0}</span>{" "}
+              nodes
             </div>
             <div className="mt-1">
-              <span className="font-medium text-primary-600">{finalFilteredEdges.length}</span> relationships
+              <span className="font-medium text-primary-600">
+                {finalFilteredEdges.length}
+              </span>{" "}
+              relationships
             </div>
             {searchTerm && (
               <div className="mt-1">
-                Search: "<span className="font-medium text-primary-600">{searchTerm}</span>"
+                Search: "
+                <span className="font-medium text-primary-600">
+                  {searchTerm}
+                </span>
+                "
               </div>
             )}
           </div>
@@ -782,7 +843,9 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
         <div className="absolute top-0 right-2 bg-white/95 backdrop-blur-sm rounded-l-xl shadow-elevated h-full max-w-md overflow-y-auto z-20 w-80 border-l border-surface/50 animate-fade-in">
           <div className="p-4">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="font-heading text-xl font-semibold text-primary-600">{selectedNode.label}</h3>
+              <h3 className="font-heading text-xl font-semibold text-primary-600">
+                {selectedNode.label}
+              </h3>
               <button
                 onClick={() => setSelectedNode(null)}
                 className="p-1 rounded-full hover:bg-surface text-textSecondary transition-colors"
@@ -800,7 +863,10 @@ export function D3ConceptMap({ data, initialComplexity = "moderate" }: D3Concept
       )}
 
       {/* SVG Container */}
-      <svg ref={svgRef} className="w-full h-full bg-gradient-to-br from-background via-primary-50/30 to-accent-50/20" />
+      <svg
+        ref={svgRef}
+        className="w-full h-full bg-gradient-to-br from-background via-primary-50/30 to-accent-50/20"
+      />
     </div>
-  )
+  );
 }
