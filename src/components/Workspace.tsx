@@ -3,18 +3,14 @@
 import { CreateMapModal } from "@/src/components/CreateMapModal";
 import { MapCard } from "@/src/components/MapCard";
 import PaginationComponent from "@/src/components/Pagination";
-import Pagination from "@/src/components/Pagination";
 import { Button } from "@/src/components/ui/button";
-import { maps_table as mapsSchema } from "@/src/server/db/schema/map-schema";
+import SearchInput from "@/src/components/ui/SearchInput";
 import { MapDbType } from "@/src/zod-schemas/map";
 import {
   Brain,
   Clock,
   Globe,
-  Grid3X3,
-  List,
   Plus,
-  Search,
   TrendingUp,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -51,7 +47,7 @@ const Workspace = ({ paginatedMaps }: { paginatedMaps: PaginatedUserMaps }) => {
   const pathname = usePathname();
   const router = useRouter();
 
-  console.log(paginatedMaps)
+  console.log(paginatedMaps);
 
   const { data: userMaps, paginateData } = paginatedMaps;
 
@@ -164,95 +160,56 @@ const Workspace = ({ paginatedMaps }: { paginatedMaps: PaginatedUserMaps }) => {
         </div>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-card border border-surface/50 p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h3 className="font-heading text-xl font-semibold text-textPrimary">
-            Your Concept Maps
-          </h3>
+      <SearchInput
+        type="dashboard"
+        search={{ term: searchTerm, onChange: handleSearch }}
+        sort={{
+          value: sortBy,
+          onChange: setSortBy,
+          options: [
+            { label: "Recent", value: "recent" },
+            { label: "Name", value: "name" },
+            { label: "Size", value: "size" },
+          ],
+        }}
+        view={{ mode: viewMode, onChange: setViewMode }}
+      />
 
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-textSecondary" />
-              <input
-                type="text"
-                placeholder="Search maps..."
-                className="pl-10 pr-4 py-2 border border-surface rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white/50"
-                onChange={(e) => debouncedSearch(e.target.value)}
-                defaultValue={searchParams.get("query")?.toString()}
-              />
-            </div>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-3 py-2 border border-surface rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white/50"
-            >
-              <option value="recent">Recent</option>
-              <option value="name">Name</option>
-              <option value="size">Size</option>
-            </select>
-
-            <div className="flex border border-surface rounded-lg overflow-hidden">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 ${
-                  viewMode === "grid"
-                    ? "bg-primary-100 text-primary-600"
-                    : "bg-white/50 text-textSecondary"
-                }`}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2 ${
-                  viewMode === "list"
-                    ? "bg-primary-100 text-primary-600"
-                    : "bg-white/50 text-textSecondary"
-                }`}
-              >
-                <List className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+      {filteredMaps.length > 0 ? (
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              : "space-y-4"
+          }
+        >
+          {filteredMaps.map((map) => (
+            <MapCard
+              key={map.id}
+              map={map}
+              viewMode={viewMode}
+              showActions={true}
+            />
+          ))}
         </div>
-
-        {filteredMaps.length > 0 ? (
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                : "space-y-4"
-            }
+      ) : (
+        <div className="text-center py-12">
+          <Brain className="h-16 w-16 text-textSecondary mx-auto mb-4 opacity-50" />
+          <h4 className="font-medium text-textPrimary mb-2">No maps found</h4>
+          <p className="text-textSecondary mb-4">
+            {searchTerm
+              ? "Try adjusting your search terms"
+              : "Create your first concept map to get started"}
+          </p>
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-gradient-to-r from-primary-500 to-primary-600"
           >
-            {filteredMaps.map((map) => (
-              <MapCard
-                key={map.id}
-                map={map}
-                viewMode={viewMode}
-                showActions={true}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Brain className="h-16 w-16 text-textSecondary mx-auto mb-4 opacity-50" />
-            <h4 className="font-medium text-textPrimary mb-2">No maps found</h4>
-            <p className="text-textSecondary mb-4">
-              {searchTerm
-                ? "Try adjusting your search terms"
-                : "Create your first concept map to get started"}
-            </p>
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-gradient-to-r from-primary-500 to-primary-600"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Your First Map
-            </Button>
-          </div>
-        )}
-      </div>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Your First Map
+          </Button>
+        </div>
+      )}
 
       {showCreateModal && (
         <CreateMapModal
