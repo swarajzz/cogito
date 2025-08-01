@@ -11,15 +11,30 @@ import { MAPS_PER_PAGE } from "@/src/lib/constants";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
-const PaginationComponent = ({ totalCount }: { totalCount: number }) => {
+interface paginateDataProps {
+  totalResults: number;
+  perPage: number;
+  currentPage: number;
+  totalPages: number;
+}
+
+const PaginationComponent = ({
+  paginateData,
+}: {
+  paginateData: paginateDataProps;
+}) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get("page")) || 1;
 
-  const totalPageCount = Math.ceil(totalCount / MAPS_PER_PAGE);
+  const {
+    totalResults,
+    perPage,
+    currentPage,
+    totalPages: totalPageCount,
+  } = paginateData;
 
   function createPageUrl(pageNumber: number) {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(searchParams || "");
     params.set("page", pageNumber.toString());
 
     return `${pathname}?${params.toString()}`;

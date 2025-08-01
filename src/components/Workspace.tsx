@@ -17,30 +17,62 @@ import {
   Search,
   TrendingUp,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+const debounceMethod = (cb, delay = 1000) => {
+  let timer;
+
+  return function (...args) {
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+      cb(...args);
+    }, delay);
+  };
+};
 interface PaginatedUserMaps {
   data: MapDbType[];
-  page: number;
-  perPage: number;
-  total: number;
+  paginateData: {
+    totalResults: number;
+    perPage: number;
+    currentPage: number;
+    totalPages: number;
+  };
 }
 
 const Workspace = ({ paginatedMaps }: { paginatedMaps: PaginatedUserMaps }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedMap, setSelectedMap] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<"recent" | "name" | "size">("recent");
 
-  const { data: userMaps, total, perPage, page } = paginatedMaps;
-
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const router = useRouter();
 
-  const countLastMonth = userMaps.filter(
-    (map) => map.createdAt > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  );
+  console.log(paginatedMaps)
+
+  const { data: userMaps, paginateData } = paginatedMaps;
+
+  function handleSearch(term: string) {
+    console.log(`Searching... ${term}`);
+
+    const params = new URLSearchParams(searchParams);
+    if (term) {
+      params.set("query", term);
+    } else {
+      params.delete("query");
+    }
+
+    router.replace(`${pathname}?${params}`);
+  }
+
+  const debouncedSearch = debounceMethod(handleSearch, 1000);
+
+  // const countLastMonth = userMaps.filter(
+  //   (map) => map.createdAt > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  // );
 
   const filteredMaps = userMaps
     .filter(
@@ -122,7 +154,7 @@ const Workspace = ({ paginatedMaps }: { paginatedMaps: PaginatedUserMaps }) => {
             <div>
               <p className="text-textSecondary text-sm">This Month</p>
               <p className="text-2xl font-bold text-textPrimary">
-                {countLastMonth.length}
+                {/* {countLastMonth.length} */}
               </p>
             </div>
             <div className="p-3 bg-info-100 rounded-lg">
@@ -145,8 +177,8 @@ const Workspace = ({ paginatedMaps }: { paginatedMaps: PaginatedUserMaps }) => {
                 type="text"
                 placeholder="Search maps..."
                 className="pl-10 pr-4 py-2 border border-surface rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white/50"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => debouncedSearch(e.target.value)}
+                defaultValue={searchParams.get("query")?.toString()}
               />
             </div>
 
@@ -232,7 +264,7 @@ const Workspace = ({ paginatedMaps }: { paginatedMaps: PaginatedUserMaps }) => {
         />
       )}
 
-      <PaginationComponent totalCount={total} />
+      <PaginationComponent paginateData={paginateData} />
     </div>
   );
 };

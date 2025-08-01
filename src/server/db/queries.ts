@@ -1,5 +1,3 @@
-import "server-only";
-
 import { auth } from "@/src/lib/auth";
 import { db } from "@/src/server/db";
 import { maps_table as mapsSchema } from "@/src/server/db/schema/map-schema";
@@ -9,7 +7,17 @@ import {
   MapDbSchemaArr,
   MapDbType,
 } from "@/src/zod-schemas/map";
-import { asc, count, desc, eq, inArray, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  or,
+  sql,
+} from "drizzle-orm";
 import { headers } from "next/headers";
 import { MAPS_PER_PAGE } from "@/src/lib/constants";
 
@@ -42,7 +50,10 @@ export const QUERIES = {
     };
   },
 
-  getUserMaps: async function (page: number = 1) {
+  getUserMaps: async function (
+    query: string | string[] = "",
+    currentPage: number = 1
+  ) {
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -51,13 +62,43 @@ export const QUERIES = {
       throw new Error("User not found");
     }
 
-    const userMaps = await db
+    let conditions = [];
+
+    const buildWhereClause = () => {
+      conditions.push(eq(mapsSchema.userId, session.user.id));
+
+      if (query) {
+        conditions.push(
+          or(
+            ilike(mapsSchema.title, `%${query}%`),
+            ilike(mapsSchema.description, `%${query}%`)
+          )
+        );
+      }
+
+      return conditions.length > 0 ? and(...conditions) : undefined;
+    };
+
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(mapsSchema)
+      .where(buildWhereClause());
+
+    const totalResults = countResult.count;
+    const totalPages = Math.ceil(totalResults / MAPS_PER_PAGE);
+    if (currentPage > totalPages) {
+      currentPage = 1;
+    }
+
+    let userMapsQuery = db
       .select()
       .from(mapsSchema)
       .orderBy(asc(mapsSchema.createdAt), asc(mapsSchema.id))
       .limit(MAPS_PER_PAGE)
-      .offset((page - 1) * MAPS_PER_PAGE)
-      .where(eq(mapsSchema.userId, session.user.id));
+      .offset((currentPage - 1) * MAPS_PER_PAGE)
+      .where(buildWhereClause());
+
+    let userMaps = await userMapsQuery;
 
     const result = MapDbSchemaArr.safeParse(userMaps);
 
@@ -65,22 +106,23 @@ export const QUERIES = {
       console.error("❌ Invalid map data:", result.error);
       return {
         data: [],
-        total: 0,
-        perPage: MAPS_PER_PAGE,
-        page,
+        paginateData: {
+          totalResults: countResult.count,
+          perPage: MAPS_PER_PAGE,
+          currentPage,
+          totalPages,
+        },
       };
     }
 
-    const [countResult] = await db
-      .select({ count: count() })
-      .from(mapsSchema)
-      .where(eq(mapsSchema.userId, session.user.id));
-
     return {
       data: result.data,
-      total: countResult.count,
-      perPage: MAPS_PER_PAGE,
-      page,
+      paginateData: {
+        totalResults: countResult.count,
+        perPage: MAPS_PER_PAGE,
+        currentPage,
+        totalPages,
+      },
     };
   },
 
