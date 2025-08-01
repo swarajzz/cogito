@@ -45,7 +45,9 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - [x] Real homepage + oboarding
 - [x] Add zod validations
 - [x] Pagination
+- [ ] Searching
 - [ ] Autocomplete search bar with backend
+- [ ] Tags filter
 - [ ] Caching
 - [ ] Create map 
 - [ ] Public && Private maps
