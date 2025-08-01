@@ -1,18 +1,7 @@
+import { useDebounce } from "@/src/hooks/useDebounceSearch";
 import { Grid3X3, List, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
-
-const debounceMethod = (cb, delay = 1000) => {
-  let timer;
-
-  return function (...args) {
-    clearTimeout(timer);
-
-    timer = setTimeout(() => {
-      cb(...args);
-    }, delay);
-  };
-};
 
 interface SearchInputProps<TSort extends string> {
   type: "dashboard" | "explore";
@@ -41,9 +30,9 @@ export default function SearchInput<TSort extends string>({
   const router = useRouter();
 
   function handleSearch(term: string) {
-    console.log(`Searching... ${term}`);
+    if (term.length < 3) return;
 
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(searchParams.toString());
     if (term) {
       params.set("query", term);
     } else {
@@ -53,7 +42,7 @@ export default function SearchInput<TSort extends string>({
     router.replace(`${pathname}?${params}`);
   }
 
-  const debouncedSearch = debounceMethod(handleSearch, 1000);
+  const debouncedSearch = useDebounce(handleSearch, 1000);
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-card border border-surface/50 p-6 mb-8">
