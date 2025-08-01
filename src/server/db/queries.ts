@@ -126,14 +126,41 @@ export const QUERIES = {
     };
   },
 
-  getExploreMaps: async function (page: number = 1) {
+  getExploreMaps: async function (
+    query: string | string[] = "",
+    currentPage: number = 1
+  ) {
+    let conditions = [];
+    const buildWhereClause = () => {
+      conditions.push(eq(mapsSchema.isPublic, true));
+
+      if (query) {
+        conditions.push(
+          or(
+            ilike(mapsSchema.title, `%${query}%`),
+            ilike(mapsSchema.description, `%${query}%`)
+          )
+        );
+      }
+
+      return conditions.length > 0 ? and(...conditions) : undefined;
+    };
+
     const exploreMaps = await db
       .select()
       .from(mapsSchema)
       .orderBy(asc(mapsSchema.createdAt), asc(mapsSchema.id))
       .limit(MAPS_PER_PAGE)
-      .offset((page - 1) * MAPS_PER_PAGE)
-      .where(eq(mapsSchema.isPublic, true));
+      .offset((currentPage - 1) * MAPS_PER_PAGE)
+      .where(and(buildWhereClause()));
+
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(mapsSchema)
+      .where(and(buildWhereClause()));
+
+    const totalResults = countResult.count;
+    const totalPages = Math.ceil(totalResults / MAPS_PER_PAGE);
 
     const result = MapDbSchemaArr.safeParse(exploreMaps);
 
@@ -141,22 +168,23 @@ export const QUERIES = {
       console.error("❌ Invalid map data:", result.error);
       return {
         data: [],
-        total: 0,
-        perPage: MAPS_PER_PAGE,
-        page,
+        paginateData: {
+          totalResults: countResult.count,
+          perPage: MAPS_PER_PAGE,
+          currentPage,
+          totalPages,
+        },
       };
     }
 
-    const [countResult] = await db
-      .select({ count: count() })
-      .from(mapsSchema)
-      .where(eq(mapsSchema.isPublic, true));
-
     return {
       data: result.data,
-      total: countResult.count,
-      perPage: MAPS_PER_PAGE,
-      page,
+      paginateData: {
+        totalResults: countResult.count,
+        perPage: MAPS_PER_PAGE,
+        currentPage,
+        totalPages,
+      },
     };
   },
 

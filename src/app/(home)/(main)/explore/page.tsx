@@ -98,14 +98,15 @@ const mockPublicMaps = [
   },
 ];
 
-export default async function ExplorePage({
-  searchParams,
-}: {
+export default async function DashboardPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const page = (await searchParams).page ?? 1;
+  const searchParams = await props.searchParams;
 
-  const paginatedExploreMaps = await QUERIES.getExploreMaps(+page);
+  const page = searchParams?.page ?? 1;
+  const query = searchParams?.query ?? "";
+
+  const paginatedExploreMaps = await QUERIES.getExploreMaps(query, +page);
   const tags = await QUERIES.getTags();
 
   return <Explore paginatedExploreMaps={paginatedExploreMaps} tags={tags} />;
