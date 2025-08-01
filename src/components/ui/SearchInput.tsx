@@ -1,11 +1,23 @@
 import { Grid3X3, List, Search } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
+
+const debounceMethod = (cb, delay = 1000) => {
+  let timer;
+
+  return function (...args) {
+    clearTimeout(timer);
+
+    timer = setTimeout(() => {
+      cb(...args);
+    }, delay);
+  };
+};
 
 interface SearchInputProps<TSort extends string> {
   type: "dashboard" | "explore";
   search: {
     term: string;
-    onChange: (term: string) => void;
   };
   sort: {
     value: TSort;
@@ -24,6 +36,25 @@ export default function SearchInput<TSort extends string>({
   sort,
   view,
 }: SearchInputProps<TSort>) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  function handleSearch(term: string) {
+    console.log(`Searching... ${term}`);
+
+    const params = new URLSearchParams(searchParams);
+    if (term) {
+      params.set("query", term);
+    } else {
+      params.delete("query");
+    }
+
+    router.replace(`${pathname}?${params}`);
+  }
+
+  const debouncedSearch = debounceMethod(handleSearch, 1000);
+
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-card border border-surface/50 p-6 mb-8">
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
@@ -39,7 +70,7 @@ export default function SearchInput<TSort extends string>({
             type="text"
             placeholder="Search maps, authors, topics..."
             className="w-full pl-10 pr-4 py-3 border border-surface rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white/50"
-            onChange={(e) => search.onChange(e.target.value)}
+            onChange={(e) => debouncedSearch(e.target.value)}
           />
         </div>
 

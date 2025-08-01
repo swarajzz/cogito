@@ -6,27 +6,10 @@ import PaginationComponent from "@/src/components/Pagination";
 import { Button } from "@/src/components/ui/button";
 import SearchInput from "@/src/components/ui/SearchInput";
 import { MapDbType } from "@/src/zod-schemas/map";
-import {
-  Brain,
-  Clock,
-  Globe,
-  Plus,
-  TrendingUp,
-} from "lucide-react";
+import { Brain, Clock, Globe, Plus, TrendingUp } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-const debounceMethod = (cb, delay = 1000) => {
-  let timer;
-
-  return function (...args) {
-    clearTimeout(timer);
-
-    timer = setTimeout(() => {
-      cb(...args);
-    }, delay);
-  };
-};
 interface PaginatedUserMaps {
   data: MapDbType[];
   paginateData: {
@@ -43,42 +26,21 @@ const Workspace = ({ paginatedMaps }: { paginatedMaps: PaginatedUserMaps }) => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<"recent" | "name" | "size">("recent");
 
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
-
-  console.log(paginatedMaps);
-
   const { data: userMaps, paginateData } = paginatedMaps;
-
-  function handleSearch(term: string) {
-    console.log(`Searching... ${term}`);
-
-    const params = new URLSearchParams(searchParams);
-    if (term) {
-      params.set("query", term);
-    } else {
-      params.delete("query");
-    }
-
-    router.replace(`${pathname}?${params}`);
-  }
-
-  const debouncedSearch = debounceMethod(handleSearch, 1000);
 
   // const countLastMonth = userMaps.filter(
   //   (map) => map.createdAt > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   // );
 
-  const filteredMaps = userMaps
-    .filter(
-      (map) =>
-        map.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        map.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        map.mapData.tags.some((tag) =>
-          tag.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    )
+  const filteredMaps = [...userMaps]
+    // .filter(
+    //   (map) =>
+    //     map.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //     map.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //     map.mapData.tags.some((tag) =>
+    //       tag.toLowerCase().includes(searchTerm.toLowerCase())
+    //     )
+    // )
     .sort((a, b) => {
       switch (sortBy) {
         case "name":
@@ -162,7 +124,7 @@ const Workspace = ({ paginatedMaps }: { paginatedMaps: PaginatedUserMaps }) => {
 
       <SearchInput
         type="dashboard"
-        search={{ term: searchTerm, onChange: handleSearch }}
+        search={{ term: searchTerm }}
         sort={{
           value: sortBy,
           onChange: setSortBy,

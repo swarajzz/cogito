@@ -42,18 +42,18 @@ const Explore = ({
   const { data: exploreMaps, paginateData } = paginatedExploreMaps;
 
   const filteredMaps = exploreMaps
-    .filter((map) => {
-      const matchesSearch =
-        map.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        map.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        map.author.toLowerCase().includes(searchTerm.toLowerCase());
+    // .filter((map) => {
+    //   const matchesSearch =
+    //     map.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //     map.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //     map.author.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesTags =
-        selectedTags.length === 0 ||
-        selectedTags.some((tag) => map.mapData.tags.includes(tag));
+    //   const matchesTags =
+    //     selectedTags.length === 0 ||
+    //     selectedTags.some((tag) => map.mapData.tags.includes(tag));
 
-      return matchesSearch && matchesTags;
-    })
+    //   return matchesSearch && matchesTags;
+    // })
     .sort((a, b) => {
       switch (sortBy) {
         case "recent":
@@ -72,16 +72,6 @@ const Explore = ({
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
-  };
-
-  const handleSearch = (term: string) => {
-    const params = new URLSearchParams(searchParams);
-    if (term) {
-      params.set("query", term);
-    } else {
-      params.delete("query");
-    }
-    router.replace(`${pathName}?${params}`);
   };
 
   return (
@@ -130,7 +120,7 @@ const Explore = ({
 
         <SearchInput
           type="explore"
-          search={{ term: searchTerm, onChange: handleSearch }}
+          search={{ term: searchTerm }}
           sort={{
             value: sortBy,
             onChange: setSortBy,
