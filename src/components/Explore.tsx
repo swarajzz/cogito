@@ -41,7 +41,7 @@ const Explore = ({
 
   const { data: exploreMaps, paginateData } = paginatedExploreMaps;
 
-  const filteredMaps = exploreMaps
+  const filteredMaps = [...exploreMaps]
     // .filter((map) => {
     //   const matchesSearch =
     //     map.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

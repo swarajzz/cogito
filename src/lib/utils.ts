@@ -41,7 +41,7 @@ export function getSystemPrompt(complexityLevel: string) {
               "resources": [
                 {
                   "title": "Resource title",
-                  "url": "URL string (optional)", // Optional – include if available or useful
+                  "url": "URL string"
                   "description": "Brief description of the resource"
                 }
               ]

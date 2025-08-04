@@ -110,6 +110,9 @@ export const createMap = async (data: MapFullType) => {
     await db.insert(mapOnTags).values(relations);
   }
 
+  revalidateTag("exploreMaps");
+  revalidateTag("tags");
+
   return { success: true, id: mapId };
 };
 

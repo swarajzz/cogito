@@ -20,6 +20,8 @@ import {
 } from "drizzle-orm";
 import { headers } from "next/headers";
 import { MAPS_PER_PAGE } from "@/src/lib/constants";
+import { unstable_cacheTag as cacheTag } from "next/cache";
+import { unstable_cacheLife as cacheLife } from "next/cache";
 
 export const QUERIES = {
   getMapData: async function (mapId: string): Promise<MapDbType | null> {
@@ -54,6 +56,8 @@ export const QUERIES = {
     query: string | string[] = "",
     currentPage: number = 1
   ) {
+    // "use cache";
+
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -61,6 +65,8 @@ export const QUERIES = {
     if (!session) {
       throw new Error("User not found");
     }
+
+    // cacheTag("userMaps");
 
     let conditions = [];
 
@@ -130,6 +136,9 @@ export const QUERIES = {
     query: string | string[] = "",
     currentPage: number = 1
   ) {
+    "use cache";
+    cacheTag("exploreMaps");
+
     let conditions = [];
     const buildWhereClause = () => {
       conditions.push(eq(mapsSchema.isPublic, true));
@@ -189,6 +198,9 @@ export const QUERIES = {
   },
 
   getFeaturedMaps: async function (): Promise<MapDbType[]> {
+    "use cache";
+    cacheLife("minutes");
+
     const featuredMaps = await db
       .select()
       .from(mapsSchema)
@@ -213,6 +225,9 @@ export const QUERIES = {
   },
 
   getTags: async function () {
+    "use cache";
+    cacheTag("tags");
+
     return db.select().from(tagsSchema);
   },
 };

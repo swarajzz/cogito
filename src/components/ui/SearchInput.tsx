@@ -30,8 +30,6 @@ export default function SearchInput<TSort extends string>({
   const router = useRouter();
 
   function handleSearch(term: string) {
-    if (term.length < 3) return;
-
     const params = new URLSearchParams(searchParams.toString());
     if (term) {
       params.set("query", term);
@@ -42,7 +40,7 @@ export default function SearchInput<TSort extends string>({
     router.replace(`${pathname}?${params}`);
   }
 
-  const debouncedSearch = useDebounce(handleSearch, 1000);
+  const debouncedSearch = useDebounce(handleSearch, 300);
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-card border border-surface/50 p-6 mb-8">

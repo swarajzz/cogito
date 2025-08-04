@@ -24,9 +24,9 @@
     "drizzle-orm": "^0.44.2",
     "drizzle-zod": "^0.8.2",
     "lucide-react": "^0.460.0",
-    "next": "15.1.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "next": "15.4.2-canary.27",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
     "react-hook-form": "^7.60.0",
     "sonner": "^2.0.6",
     "tailwind-merge": "^2.5.4",
@@ -35,15 +35,21 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
-    "@types/react": "^19.0.1",
-    "@types/react-dom": "^19.0.2",
+    "@types/react": "19.1.9",
+    "@types/react-dom": "19.1.7",
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9.17.0",
-    "eslint-config-next": "15.1.0",
+    "eslint-config-next": "15.4.5",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2"
   },
-  "packageManager": "pnpm@10.12.4+sha512.5ea8b0deed94ed68691c9bad4c955492705c5eeb8a87ef86bc62c74a26b037b08ff9570f108b2e4dbd1dd1a9186fea925e527f141c648e85af45631074680184"
+  "packageManager": "pnpm@10.12.4+sha512.5ea8b0deed94ed68691c9bad4c955492705c5eeb8a87ef86bc62c74a26b037b08ff9570f108b2e4dbd1dd1a9186fea925e527f141c648e85af45631074680184",
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.1.9",
+      "@types/react-dom": "19.1.7"
+    }
+  }
 }
