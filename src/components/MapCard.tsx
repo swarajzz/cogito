@@ -2,7 +2,7 @@
 
 import { Button } from "@/src/components/ui/button";
 import { DOMAIN } from "@/src/lib/constants";
-import { likeMap } from "@/src/server/db/actions";
+import { deleteMap, likeMap } from "@/src/server/db/actions";
 import { MapDbType } from "@/src/zod-schemas/map";
 import {
   MoreHorizontal,
@@ -58,6 +58,16 @@ export function MapCard({
       });
   }
 
+  async function handleDelete() {
+    try {
+      await deleteMap(map.id);
+      toast.success("Map deleted successfully!");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete the map. Please try again.");
+    }
+  }
+
   async function handleLiked(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     e.stopPropagation();
@@ -84,7 +94,11 @@ export function MapCard({
       <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-card border border-surface/50 p-6 hover:shadow-elevated transition-all duration-200">
         <div className="flex items-start justify-between">
           <div className="flex-1 cursor-pointer">
-            <Link href={`/map/${map.id}`} className="flex-1 block">
+            <Link
+              prefetch={true}
+              href={`/map/${map.id}`}
+              className="flex-1 block"
+            >
               <div className="flex items-start gap-4">
                 <div className="w-20 h-16 bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Network className="h-8 w-8 text-primary-600" />
@@ -174,7 +188,10 @@ export function MapCard({
                     Share
                   </button>
                   {!pathname.includes("explore") && (
-                    <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface rounded-md flex items-center gap-2 text-red-600">
+                    <button
+                      onClick={handleDelete}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-surface rounded-md flex items-center gap-2 text-red-600"
+                    >
                       <Trash2 className="h-3 w-3" />
                       Delete
                     </button>
@@ -305,6 +322,7 @@ export function MapCard({
           </div>
           {!pathname.includes("explore") && (
             <Button
+              onClick={handleDelete}
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 text-red-500 hover:text-red-600"

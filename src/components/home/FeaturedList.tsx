@@ -17,12 +17,7 @@ const FeaturedList = ({
       {featuredMaps
         .filter((map) => map.isPublic)
         .map((map) => (
-          <MapCard
-            key={map.id}
-            map={map}
-            viewMode="grid"
-            showActions={false}
-          />
+          <MapCard key={map.id} map={map} viewMode="grid" showActions={false} />
         ))}
     </div>
   );

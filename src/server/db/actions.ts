@@ -7,6 +7,7 @@ import { maps_table } from "@/src/server/db/schema/map-schema";
 import { mapOnTags, tags_table } from "@/src/server/db/schema/tags-schema";
 import { MapCoreSchema, MapFullType } from "@/src/zod-schemas/map";
 import { eq, sql } from "drizzle-orm";
+import { revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 
 export const signIn = async (email: string, password: string) => {
@@ -110,6 +111,18 @@ export const createMap = async (data: MapFullType) => {
   }
 
   return { success: true, id: mapId };
+};
+
+export const deleteMap = async (id: number) => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("User not found");
+  }
+
+  await db.delete(maps_table).where(eq(maps_table.id, id));
 };
 
 export const likeMap = async (mapId: number) => {
